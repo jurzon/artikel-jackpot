@@ -40,77 +40,85 @@
   <main class="cabinet" id="cabinet">
     <div class="fx" id="fx" aria-hidden="true"></div>
 
-    <header class="marquee">
-      <div class="fan" aria-hidden="true"></div>
-      <div class="corner left">
-        <button class="icon" id="btn-book" title="Kniha dlžníkov" aria-label="Kniha dlžníkov"><svg><use href="#i-book"/></svg></button>
-        <button class="icon" id="btn-help" title="Pravidlá" aria-label="Pravidlá">?</button>
-      </div>
-      <div class="corner right">
-        <button class="icon" id="btn-sound" title="Zvuk" aria-label="Zvuk"><svg><use id="sound-use" href="#i-sound"/></svg></button>
-      </div>
-      <p class="kicker">der <i></i> die <i></i> das</p>
-      <h1 class="logo"><small>Artikel</small>Jackpot</h1>
-      <div class="jackpot"><span>Jackpot</span><b id="jackpot">500</b></div>
-    </header>
-
-    <div class="testbar" id="testbar" hidden>
-      <b>Test</b>
-      <button id="t-add">+1000</button>
-      <button id="t-broke">Bankrot</button>
-      <button id="t-off">Vypnúť</button>
-    </div>
-
-    <div class="displays">
-      <div class="display"><label>Gewinn</label><output id="pot">0</output></div>
-      <div class="display"><label>Bank</label><output id="bank">100</output></div>
-    </div>
-
-    <div class="ticker" id="msg" aria-live="polite"></div>
-
-    <div class="rail">
-      <div class="rungs" id="rungs" title="Risikoleiter" aria-label="Risikoleiter"></div>
-      <button class="joker" id="btn-joker" title="Joker: vyškrtne dve zlé možnosti (J)"><svg><use href="#i-joker"/></svg>Joker <span id="jokers">1</span></button>
-    </div>
-
-    <section class="window" id="reels" aria-label="Valce"></section>
-
-    <section class="window" id="ladder" aria-label="Risikoleiter" hidden>
-      <div class="flip down" id="card">
-        <div class="flip-inner">
-          <div class="bigcard card-front" id="card-front">
-            <div class="chip" id="card-odds"></div>
-            <div class="card-word" id="card-word">?</div>
-            <div class="card-info" id="card-info"></div>
-          </div>
-          <div class="card-back" aria-hidden="true">
-            <div class="medallion">?</div>
-            <div class="back-odds" id="card-back-odds"></div>
-          </div>
+    <!-- stav hry -->
+    <section class="side">
+      <header class="marquee">
+        <div class="fan" aria-hidden="true"></div>
+        <div class="corner left">
+          <button class="icon" id="btn-book" title="Kniha dlžníkov" aria-label="Kniha dlžníkov"><svg><use href="#i-book"/></svg></button>
+          <button class="icon" id="btn-help" title="Pravidlá" aria-label="Pravidlá">?</button>
         </div>
+        <div class="corner right">
+          <button class="icon" id="btn-sound" title="Zvuk" aria-label="Zvuk"><svg><use id="sound-use" href="#i-sound"/></svg></button>
+        </div>
+        <h1 class="logo"><small>Artikel</small>Jackpot</h1>
+      </header>
+
+      <div class="testbar" id="testbar" hidden>
+        <b>Test</b>
+        <button id="t-add">+1000</button>
+        <button id="t-broke">Bankrot</button>
+        <button id="t-off">Vypnúť</button>
+      </div>
+
+      <div class="displays">
+        <div class="display"><label>Bank</label><output id="bank">100</output></div>
+        <div class="display"><label>Gewinn</label><output id="pot">0</output></div>
+        <div class="display"><label>Jackpot</label><output id="jackpot">500</output></div>
+      </div>
+
+      <div class="ticker" id="msg" aria-live="polite"></div>
+
+      <div class="rail">
+        <div class="rungs" id="rungs" title="Risikoleiter" aria-label="Risikoleiter"></div>
+        <button class="joker" id="btn-joker" title="Joker: vyškrtne dve zlé možnosti (J)"><svg><use href="#i-joker"/></svg>Joker <span id="jokers">1</span></button>
       </div>
     </section>
 
-    <div class="answers" id="answers">
-      <button class="ans g-der" data-a="der"><kbd>1</kbd>der</button>
-      <button class="ans g-die" data-a="die"><kbd>2</kbd>die</button>
-      <button class="ans g-das" data-a="das"><kbd>3</kbd>das</button>
-      <button class="ans g-none" data-a="-"><kbd>4</kbd>—</button>
-    </div>
+    <!-- hracia plocha -->
+    <section class="play">
+      <section class="window" id="reels" aria-label="Valce"></section>
 
-    <div class="controls" id="ctl-bet">
-      <div class="betbox">
-        <button class="sq" id="bet-minus" aria-label="Znížiť vklad">−</button>
-        <div class="display small"><label>Vklad</label><output id="bet">5</output></div>
-        <button class="sq" id="bet-plus" aria-label="Zvýšiť vklad">+</button>
+      <section class="window" id="ladder" aria-label="Risikoleiter" hidden>
+        <div class="flip down" id="card">
+          <div class="flip-inner">
+            <div class="bigcard card-front" id="card-front">
+              <div class="chip" id="card-odds"></div>
+              <div class="card-word" id="card-word">?</div>
+              <div class="card-info" id="card-info"></div>
+            </div>
+            <div class="card-back" aria-hidden="true">
+              <div class="medallion">?</div>
+              <div class="back-odds" id="card-back-odds"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- akčný panel: vždy len to, čo sa dá práve stlačiť -->
+      <div class="dock" id="dock">
+        <div class="controls" id="ctl-bet">
+          <div class="betbox">
+            <button class="sq" id="bet-minus" aria-label="Znížiť vklad">−</button>
+            <div class="display small"><label>Vklad</label><output id="bet">5</output></div>
+            <button class="sq" id="bet-plus" aria-label="Zvýšiť vklad">+</button>
+          </div>
+          <button class="big spin" id="btn-spin">SPIN</button>
+        </div>
+
+        <div class="answers" id="answers" hidden>
+          <button class="ans g-der" data-a="der"><kbd>1</kbd>der</button>
+          <button class="ans g-die" data-a="die"><kbd>2</kbd>die</button>
+          <button class="ans g-das" data-a="das"><kbd>3</kbd>das</button>
+          <button class="ans g-none" data-a="-"><kbd>4</kbd>—</button>
+        </div>
+
+        <div class="controls" id="ctl-offer" hidden>
+          <button class="big cash" id="btn-cash">KASSIEREN<small id="cash-sub"></small></button>
+          <button class="big risk" id="btn-risk">RISIKO<small id="risk-sub"></small></button>
+        </div>
       </div>
-      <button class="big spin" id="btn-spin">SPIN</button>
-    </div>
-
-    <div class="controls" id="ctl-offer" hidden>
-      <button class="big cash" id="btn-cash">KASSIEREN<small id="cash-sub"></small></button>
-      <button class="big risk" id="btn-risk">RISIKO<small id="risk-sub"></small></button>
-    </div>
+    </section>
   </main>
 
   <dialog id="dlg-help">

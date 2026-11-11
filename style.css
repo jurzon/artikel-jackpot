@@ -64,10 +64,10 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   position: relative;
   width: min(100vw, 480px);
   min-height: 100dvh;
-  padding: env(safe-area-inset-top) 16px calc(16px + env(safe-area-inset-bottom));
+  padding: env(safe-area-inset-top) 16px 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--gap);
   background: var(--grain), linear-gradient(180deg, #133630 0%, #0c211d 55%, #09150f 100%);
   box-shadow: 0 0 0 1px rgba(201,163,90,.55), 0 0 0 7px var(--ink), 0 0 0 8px rgba(201,163,90,.3), 0 0 90px rgba(0,0,0,.8);
 }
@@ -162,27 +162,6 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   letter-spacing: 12px; text-indent: 12px; text-transform: uppercase;
   -webkit-text-fill-color: var(--cream);
 }
-.jackpot {
-  position: relative;
-  display: inline-flex; align-items: center; gap: 10px;
-  margin-top: 10px;
-  padding: 4px 6px 4px 14px;
-  color: var(--text);
-  background: linear-gradient(180deg, var(--brass-hi), var(--brass) 60%, #a8833f);
-  border-radius: 999px;
-  box-shadow: 0 0 0 1px #5c4519, 0 3px 10px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.6);
-}
-.jackpot span { font: 700 10.5px var(--sans); letter-spacing: 3px; text-transform: uppercase; }
-.jackpot b {
-  min-width: 74px; padding: 1px 12px;
-  font: 800 19px/1.35 var(--serif);
-  font-variant-numeric: tabular-nums lining-nums;
-  color: var(--brass-hi);
-  background: #0a1412;
-  border-radius: 999px;
-  box-shadow: inset 0 2px 5px rgba(0,0,0,.8);
-}
-
 /* ---- úvodná obrazovka ------------------------------------------------- */
 
 .splash {
@@ -227,7 +206,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 
 /* ---- displeje a hlásenia ---------------------------------------------- */
 
-.displays { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.displays { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .display { display: flex; flex-direction: column; text-align: center; }
 .display label {
   font: 600 10.5px var(--sans);
@@ -305,7 +284,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 
 .window {
   padding: 12px;
-  display: flex; flex-direction: column; gap: 9px;
+  display: flex; flex-direction: column; gap: var(--wgap);
   background: var(--grain), radial-gradient(130% 100% at 50% 0%, #20634f 0%, var(--felt) 45%, var(--felt-deep) 100%);
   border: 1px solid var(--brass);
   border-radius: 22px;
@@ -322,8 +301,8 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   grid-template-columns: 58px 1fr auto;
   align-items: center;
   gap: 8px;
-  min-height: 72px;
-  padding: 9px 12px 9px 8px;
+  min-height: var(--reel-h);
+  padding: 6px 12px 6px 8px;
   color: var(--text);
   background: linear-gradient(180deg, #fdf8ea, var(--paper) 40%, var(--paper-lo));
   border-radius: 13px;
@@ -413,7 +392,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 
 .bigcard {
   position: relative;
-  min-height: 176px;
+  min-height: calc(3 * var(--reel-h) + 2 * var(--wgap));
   padding: 34px 18px 20px;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
   text-align: center;
@@ -520,7 +499,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 
 /* ---- ovládanie -------------------------------------------------------- */
 
-.controls { display: flex; gap: 12px; align-items: stretch; margin-top: auto; padding-top: 6px; }
+.controls { display: flex; gap: 12px; align-items: stretch; }
 .betbox { display: flex; align-items: flex-end; gap: 8px; }
 .sq {
   width: 42px; height: 42px; margin-bottom: 1px;
@@ -552,13 +531,6 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .big:disabled { filter: saturate(.3) brightness(.55); }
 .big { min-width: 0; }
 .cash, .risk, .big.wide { font-size: 19px; letter-spacing: 2px; }
-@media (max-width: 380px) {
-  .cash, .risk, .big.wide { font-size: 16px; letter-spacing: 1px; }
-  .controls { gap: 9px; }
-  .betbox { gap: 5px; }
-  .sq { width: 38px; height: 38px; }
-  .display.small output { min-width: 64px; }
-}
 .risk {
   color: var(--brass-hi);
   background: linear-gradient(180deg, #2a1a12, #120c08);
@@ -661,28 +633,97 @@ b.t-das { background: var(--das); } b.t-none { background: var(--none); }
 .link { color: #f6a9b3; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; padding: 8px 0; }
 .pawn-progress { margin-bottom: 10px; text-align: center; font: 600 12px var(--sans); letter-spacing: 2px; text-transform: uppercase; color: var(--brass); }
 
-/* ---- nízke obrazovky -------------------------------------------------- */
+/* ---- rozloženie ------------------------------------------------------- */
+/* Hra sa nikdy neposúva: veľkosti sa odvodzujú od výšky okna. */
 
-@media (max-height: 800px) {
-  .cabinet { gap: 9px; }
-  .marquee { padding: 14px 16px 14px; }
-  .kicker { display: none; }
-  .marquee h1 { font-size: 44px; margin-top: 22px; }
-  .marquee h1 small { font-size: 12px; }
-  .reel { min-height: 62px; }
-  .ticker { min-height: 38px; font-size: 15px; }
-  .ans, .big { height: 56px; min-height: 56px; }
+:root {
+  --gap: clamp(7px, 1.5dvh, 12px);
+  --wgap: clamp(6px, 1.1dvh, 9px);
+  --extra: 0px;
+  --reel-h: clamp(54px, calc((100dvh - 385px - var(--extra)) / 3.7), 100px);
+  --dock-h: clamp(54px, 8.4dvh, 66px);
 }
 
-@media (max-height: 700px) {
-  .cabinet { gap: 7px; }
-  .marquee { padding-bottom: 12px; }
-  .marquee h1 { font-size: 36px; margin-top: 16px; }
-  .jackpot { margin-top: 6px; }
+:root:has(#testbar:not([hidden])) { --extra: 60px; }   /* testovacia lišta zaberá miesto */
+.side, .play { display: flex; flex-direction: column; gap: var(--gap); min-width: 0; }
+.play { flex: 1; }
+
+/* hlavička: v základe nízka, logo medzi ikonami */
+.marquee { padding: 12px 16px 16px; }
+.marquee .logo { margin: 0; font-size: clamp(30px, 9.4vw, 40px); }
+.marquee .logo small { font-size: 10px; letter-spacing: 8px; text-indent: 8px; }
+.corner { top: 14px; gap: 6px; }
+.icon { width: 34px; height: 34px; font-size: 17px; }
+.icon svg { width: 19px; height: 19px; }
+
+.display output { font-size: clamp(19px, 5.8vw, 26px); padding-inline: 4px; }
+.display output[data-len="6"] { font-size: clamp(16px, 4.8vw, 22px); }
+.display output[data-len="7"], .display output[data-len="8"], .display output[data-len="9"] { font-size: clamp(13px, 3.9vw, 18px); line-height: 1.75; }
+.ticker { min-height: clamp(36px, 5.6dvh, 44px); }
+
+/* akčný panel: jedna skupina tlačidiel, prilepený k spodku okna */
+.dock {
+  position: sticky; bottom: 0; z-index: 3;
+  margin: auto -16px 0;
+  padding: 10px 16px calc(12px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(9,21,15,0), #09150f 26%);
+}
+.dock > * { height: var(--dock-h); }
+.dock .ans, .dock .big { height: 100%; min-height: 0; }
+.dock .betbox { align-items: center; }
+.dock .display.small label { font-size: 9.5px; letter-spacing: 3px; }
+.dock .display.small output { margin-top: 2px; font-size: 19px; line-height: 1.2; }
+.dock > :not([hidden]) { animation: dock-in .22s ease-out; }
+@keyframes dock-in { from { opacity: 0; transform: translateY(8px); } }
+
+@media (max-width: 380px) {
+  .cash, .risk, .big.wide { font-size: 16px; letter-spacing: 1px; }
+  .controls { gap: 9px; }
+  .betbox { gap: 5px; }
+  .sq { width: 38px; height: 38px; }
+  .display.small output { min-width: 64px; }
+  .displays { gap: 9px; }
+}
+
+/* vysoký mobil: veľká hlavička s logom pod ikonami */
+@media (min-height: 781px) {
+  :root { --reel-h: clamp(54px, calc((100dvh - 450px - var(--extra)) / 3.7), 100px); }
+  .marquee { padding: 56px 16px 20px; }
+  .marquee .logo { font-size: clamp(46px, 14.5vw, 60px); }
+  .marquee .logo small { font-size: 14px; letter-spacing: 12px; text-indent: 12px; }
+}
+
+/* široké a nízke okno (notebook, mobil na ležato): dva stĺpce */
+@media (min-width: 860px) and (max-height: 780px), (min-width: 620px) and (max-height: 520px) {
+  :root {
+    --reel-h: clamp(50px, calc((100dvh - 150px) / 3.5), 84px);
+    --dock-h: clamp(52px, 11dvh, 68px);
+  }
+  .cabinet {
+    width: min(100vw, 1060px);
+    flex-direction: row; align-items: center;
+    gap: clamp(18px, 3vw, 36px);
+    padding: env(safe-area-inset-top) clamp(16px, 3vw, 32px) 0;
+  }
+  .side { flex: 0 0 clamp(270px, 37%, 380px); justify-content: center; }
+  .play { justify-content: center; }
+  .marquee { margin: 0; border-radius: 18px; }
+  .marquee::after { left: 10%; right: 10%; }
+  .dock { position: static; margin: 0; padding: 8px 0 10px; background: none; }
+  .displays { gap: 10px; }
   .display output { font-size: 22px; }
-  .reel { min-height: 56px; padding-block: 6px; }
-  .bigcard { min-height: 150px; }
-  .window { padding: 9px; gap: 7px; }
+  .display output[data-len="6"] { font-size: 18px; }
+  .display output[data-len="7"], .display output[data-len="8"], .display output[data-len="9"] { font-size: 14px; }
+  /* úzky ľavý stĺpec: logo pod ikonami, nie medzi nimi */
+  .marquee { padding: 50px 12px 16px; }
+  .marquee .logo { font-size: 34px; }
+  .corner { top: 10px; }
+  .corner.left { left: 10px; } .corner.right { right: 10px; }
+}
+@media (min-width: 860px) and (min-height: 560px) and (max-height: 780px) {
+  .marquee { padding: 58px 16px 24px; }
+  .marquee .logo { font-size: 58px; }
+  .marquee .logo small { font-size: 14px; letter-spacing: 12px; text-indent: 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

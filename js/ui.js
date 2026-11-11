@@ -29,6 +29,8 @@
   let struck = new Set();
   let jokerUsed = false;
   let pawn = null;
+  let dockGroup = 'ctl-bet';
+  let dockLockUntil = 0;
   // Testovací mód: klávesa T alebo ?test v adrese. Zvýrazní správnu odpoveď.
   let testMode = Store.getFlag('test', false) || /[?&]test\b/.test(location.search);
 
@@ -86,6 +88,7 @@
     if (el._target === target) return;
     const from = el._shown;
     el._target = target;
+    el.dataset.len = String(target).length;
     cancelAnimationFrame(el._raf);
     if (from === undefined || calm) {
       el._shown = target;
@@ -193,8 +196,10 @@
     $('#t-broke').disabled = !idle;
     $('#btn-joker').disabled = !answering || jokerUsed || S.jokers < 1;
 
-    $('#ctl-bet').hidden = inLadder;
-    $('#ctl-offer').hidden = !inLadder;
+    // Akčný panel ukazuje jedinú skupinu: vklad+SPIN, členy, alebo Kassieren/Risiko.
+    const group = answering ? 'answers' : inLadder ? 'ctl-offer' : 'ctl-bet';
+    dockGroup = group;
+    for (const id of ['ctl-bet', 'answers', 'ctl-offer']) $('#' + id).hidden = id !== group;
     $('#btn-spin').disabled = !idle;
     $('#btn-spin').textContent = idle && broke ? 'PFANDHAUS' : 'SPIN';
     $('#btn-spin').classList.toggle('wide', idle && broke);
@@ -576,6 +581,15 @@
 
   function wire() {
     $('#btn-enter').addEventListener('click', enter);
+    // Ak ťuknutie vymenilo obsah panela, panel chvíľu ignoruje ďalšie ťuknutia,
+    // aby dvojité ťuknutie nespustilo tlačidlo, ktoré sa práve objavilo pod prstom.
+    $('#dock').addEventListener('click', (e) => {
+      if (performance.now() < dockLockUntil) return e.stopPropagation();
+      const before = dockGroup;
+      setTimeout(() => {
+        if (dockGroup !== before) dockLockUntil = performance.now() + 400;
+      }, 0);
+    }, true);
     $('#t-off').addEventListener('click', () => setTestMode(false));
     $('#t-add').addEventListener('click', () => {
       S.bank += 1000;
@@ -624,6 +638,7 @@
     document.addEventListener('keydown', (e) => {
       if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
       const k = e.key;
+      dockLockUntil = 0;   // klávesnica je vždy úmyselná
       const splash = $('#splash');
       if (splash && !splash.classList.contains('out')) {
         if (k === 'Enter' || k === ' ') {
