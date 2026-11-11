@@ -186,11 +186,11 @@
       const out = struck.has(b.dataset.a);
       b.disabled = !answering || out;
       b.classList.toggle('struck', out);
-      b.classList.toggle('hint', testMode && !!current && b.dataset.a === current.a);
+      b.classList.toggle('tip', testMode && !!current && b.dataset.a === current.a);
     });
     const pawnItem = pawn && !pawn.answered ? pawn.list[pawn.i] : null;
     document.querySelectorAll('#pawn-answers .ans').forEach((b) => {
-      b.classList.toggle('hint', testMode && !!pawnItem && b.dataset.a === pawnItem.a);
+      b.classList.toggle('tip', testMode && !!pawnItem && b.dataset.a === pawnItem.a);
     });
     $('#testbar').hidden = !testMode;
     $('#t-broke').disabled = !idle;

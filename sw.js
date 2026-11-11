@@ -1,6 +1,6 @@
 // Service worker: hra funguje offline.
 // Stratégia: najprv sieť (aby sa hneď prejavili nové verzie), pri výpadku cache.
-const CACHE = 'artikel-jackpot-v2';
+const CACHE = 'artikel-jackpot-v3';
 const FILES = [
   './',
   'index.html',

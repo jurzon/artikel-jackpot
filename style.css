@@ -188,9 +188,10 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 @keyframes rays12 { to { --spin: 12deg; } }
 .splash-in { position: relative; width: min(100%, 380px); display: flex; flex-direction: column; align-items: center; }
 .splash-in > * { animation: rise .6s ease-out both; }
-.splash .mark { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; animation: none; }
-.splash .mark::before, .splash .mark::after { content: ""; width: 46px; height: 1px; background: linear-gradient(90deg, transparent, var(--brass)); }
-.splash .mark::after { transform: scaleX(-1); }
+.mark { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 22px; }
+.splash .mark { animation: none; }
+.mark::before, .mark::after { content: ""; width: 46px; height: 1px; background: linear-gradient(90deg, transparent, var(--brass)); }
+.mark::after { transform: scaleX(-1); }
 .mark i { width: 26px; height: 26px; animation: stamp .45s cubic-bezier(.2,1.5,.4,1) both; }
 .mark i:nth-child(1) { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); width: 30px; height: 30px; animation-delay: .15s; }
 .mark i:nth-child(2) { border-radius: 50%; animation-delay: .3s; }
@@ -318,9 +319,26 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   pointer-events: none;
 }
 .reel.active {
-  transform: translateY(-2px) scale(1.012);
-  box-shadow: 0 0 0 2px var(--brass-hi), 0 0 24px rgba(241,224,172,.6), 0 9px 18px rgba(0,0,0,.45);
+  z-index: 1;
+  transform: scale(1.025);
+  background: linear-gradient(180deg, #fffdf4, #fbf3dc 45%, #f1e3bd);
+  box-shadow: 0 0 0 3px var(--brass-hi), 0 0 0 7px rgba(201,163,90,.38), 0 0 36px 4px rgba(241,224,172,.7), 0 12px 24px rgba(0,0,0,.5);
+  animation: active-glow 1.5s ease-in-out infinite;
 }
+@keyframes active-glow {
+  50% { box-shadow: 0 0 0 3px var(--brass-hi), 0 0 0 7px rgba(201,163,90,.15), 0 0 20px 0 rgba(241,224,172,.35), 0 12px 24px rgba(0,0,0,.5); }
+}
+/* pečať aktívnej karty je plná mosadz, ostatné nezodpovedané karty ustúpia */
+.reel.active .slot {
+  color: var(--text);
+  border: 0;
+  background: radial-gradient(circle at 35% 30%, #fff6d6, var(--brass) 60%, #9a7634);
+  box-shadow: 0 0 0 3px rgba(201,163,90,.35), 0 2px 5px rgba(0,0,0,.3);
+  animation: seal-pulse 1.5s ease-in-out infinite;
+}
+@keyframes seal-pulse { 50% { transform: scale(1.1); } }
+.reel.active .word { color: #000; }
+#reels:has(.reel.active) .reel:not(.active):not(.ok) { opacity: .5; transform: scale(.975); filter: saturate(.55); box-shadow: 0 2px 0 #b6a47c; }
 .reel.bad { background: linear-gradient(180deg, #fdeeee, #f4d3d6); box-shadow: 0 0 0 2px var(--die), 0 7px 14px rgba(0,0,0,.38); }
 .reel.dim { opacity: .58; }
 
@@ -557,8 +575,8 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   border-radius: 999px;
 }
 .testbar button:disabled { opacity: .4; }
-.ans.hint { outline: 3px solid var(--brass-hi); outline-offset: 3px; animation: hint .9s ease-in-out infinite; }
-.ans.hint::after {
+.ans.tip { outline: 3px solid var(--brass-hi); outline-offset: 3px; animation: hint .9s ease-in-out infinite; }
+.ans.tip::after {
   content: "";
   position: absolute; top: 7px; right: 9px;
   width: 6px; height: 11px;
@@ -648,7 +666,8 @@ b.t-das { background: var(--das); } b.t-none { background: var(--none); }
 .side, .play { display: flex; flex-direction: column; gap: var(--gap); min-width: 0; }
 .play { flex: 1; }
 
-/* hlavička: v základe nízka, logo medzi ikonami */
+/* hlavička: v základe nízka, logo medzi ikonami; ozdoby len na plagáte */
+.marquee .mark, .marquee .kicker { display: none; }
 .marquee { padding: 12px 16px 16px; }
 .marquee .logo { margin: 0; font-size: clamp(30px, 9.4vw, 40px); }
 .marquee .logo small { font-size: 10px; letter-spacing: 8px; text-indent: 8px; }
@@ -720,10 +739,51 @@ b.t-das { background: var(--das); } b.t-none { background: var(--none); }
   .corner { top: 10px; }
   .corner.left { left: 10px; } .corner.right { right: 10px; }
 }
-@media (min-width: 860px) and (min-height: 560px) and (max-height: 780px) {
-  .marquee { padding: 58px 16px 24px; }
-  .marquee .logo { font-size: 58px; }
-  .marquee .logo small { font-size: 14px; letter-spacing: 12px; text-indent: 12px; }
+/* notebook: vľavo plagát s logom na celú výšku, vpravo všetko, čo hráč sleduje */
+@media (min-width: 860px) and (min-height: 540px) and (max-height: 780px) {
+  :root { --reel-h: clamp(56px, calc((100dvh - 345px - var(--extra)) / 3.5), 84px); }
+  .cabinet {
+    display: grid;
+    grid-template-columns: clamp(300px, 36%, 390px) 1fr;
+    grid-template-rows: 1fr repeat(6, auto) 1fr;
+    column-gap: clamp(20px, 3vw, 36px); row-gap: var(--gap);
+    padding-block: 0;
+    align-items: stretch;
+  }
+  .side, .play { display: contents; }
+  .cabinet > .side > *, .cabinet > .play > * { grid-column: 2; }
+  .testbar { grid-row: 2; } .displays { grid-row: 3; } .ticker { grid-row: 4; } .rail { grid-row: 5; }
+  .window { grid-row: 6; } .dock { grid-row: 7; padding: 4px 0 6px; }
+  .cabinet > .side > .marquee {
+    grid-column: 1; grid-row: 1 / -1;
+    margin: 18px 0;
+    padding: 64px 16px 40px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border: 1px solid rgba(201,163,90,.5);
+    border-radius: 24px;
+    background: radial-gradient(90% 60% at 50% 50%, #1d5246 0%, #0e2a24 60%, #0a1814 100%);
+    box-shadow: 0 0 0 4px #0a1614, 0 0 0 5px rgba(201,163,90,.3), inset 0 0 60px rgba(0,0,0,.45);
+  }
+  .marquee::after { display: none; }
+  .marquee .fan {
+    left: 50%; top: 50%; bottom: auto;
+    width: 900px; height: 900px;
+    transform: translate(-50%, -50%);
+    background:
+      repeating-radial-gradient(circle, transparent 0 58px, rgba(201,163,90,.18) 58px 59px),
+      repeating-conic-gradient(from calc(-1deg + var(--spin)), rgba(201,163,90,.22) 0 2deg, transparent 2deg 10deg);
+    -webkit-mask: radial-gradient(circle, transparent 0, #000 16%, rgba(0,0,0,.6) 34%, transparent 56%);
+            mask: radial-gradient(circle, transparent 0, #000 16%, rgba(0,0,0,.6) 34%, transparent 56%);
+  }
+  .marquee .mark, .marquee .kicker { display: flex; position: relative; }
+  .marquee .mark { margin-bottom: 18px; }
+  .marquee .mark::before, .marquee .mark::after { width: 30px; }
+  .marquee .kicker { display: block; margin: 16px 0 0; }
+  .marquee .logo { font-size: clamp(54px, 5.6vw, 68px); }
+  .marquee .logo small { font-size: 14px; letter-spacing: 13px; text-indent: 13px; }
+  .corner { top: 14px; } .corner.left { left: 14px; } .corner.right { right: 14px; }
+  .icon { width: 38px; height: 38px; }
+  .display output { font-size: 24px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
