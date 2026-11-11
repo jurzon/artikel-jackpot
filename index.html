@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0e2622">
+  <title>Artikel Jackpot</title>
+  <meta name="description" content="Nemecké členy der, die, das v kasíne, kde bankuje tvoja pamäť.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Jackpot">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M3.5 6.2c2.6-1.3 5.6-1.3 8.5.3v12.3c-2.9-1.6-5.900-1.600-8.500-.3zM20.500 6.200c-2.600-1.300-5.600-1.300-8.500.300v12.300c2.900-1.600 5.900-1.600 8.500-.3z"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9.500h3l4.500-3.800v12.600L7 14.500H4z"/><path d="M15.200 9.200a4 4 0 0 1 0 5.600M17.800 6.600a7.600 7.600 0 0 1 0 10.800"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9.500h3l4.500-3.800v12.600L7 14.500H4z"/><path d="M15.500 9.500l5 5M20.500 9.500l-5 5"/></symbol>
+    <symbol id="i-joker" viewBox="0 0 24 24"><rect x="5.500" y="3" width="13" height="18" rx="2.200"/><path d="M12 7.800l2.800 4.200-2.800 4.200L9.200 12z"/></symbol>
+    <symbol id="i-crown" viewBox="0 0 24 24"><path d="M4.500 17L3 7.500l5 3.800L12 5l4 6.300 5-3.800L19.500 17zM5 20h14"/></symbol>
+  </svg>
+
+  <div class="splash" id="splash">
+    <div class="splash-rays" aria-hidden="true"></div>
+    <div class="splash-in">
+      <div class="mark" aria-hidden="true"><i class="g-der"></i><i class="g-die"></i><i class="g-das"></i><i class="g-none"></i></div>
+      <p class="kicker">Spielbank der Artikel</p>
+      <p class="logo"><small>Artikel</small>Jackpot</p>
+      <p class="tagline">Nemecké členy v kasíne,<br>kde bankuje tvoja pamäť.</p>
+      <button class="big spin" id="btn-enter" autofocus>Vstúpiť</button>
+      <p class="splash-foot">der <i></i> die <i></i> das</p>
+    </div>
+  </div>
+
+  <main class="cabinet" id="cabinet">
+    <div class="fx" id="fx" aria-hidden="true"></div>
+
+    <header class="marquee">
+      <div class="fan" aria-hidden="true"></div>
+      <div class="corner left">
+        <button class="icon" id="btn-book" title="Kniha dlžníkov" aria-label="Kniha dlžníkov"><svg><use href="#i-book"/></svg></button>
+        <button class="icon" id="btn-help" title="Pravidlá" aria-label="Pravidlá">?</button>
+      </div>
+      <div class="corner right">
+        <button class="icon" id="btn-sound" title="Zvuk" aria-label="Zvuk"><svg><use id="sound-use" href="#i-sound"/></svg></button>
+      </div>
+      <p class="kicker">der <i></i> die <i></i> das</p>
+      <h1 class="logo"><small>Artikel</small>Jackpot</h1>
+      <div class="jackpot"><span>Jackpot</span><b id="jackpot">500</b></div>
+    </header>
+
+    <div class="testbar" id="testbar" hidden>
+      <b>Test</b>
+      <button id="t-add">+1000</button>
+      <button id="t-broke">Bankrot</button>
+      <button id="t-off">Vypnúť</button>
+    </div>
+
+    <div class="displays">
+      <div class="display"><label>Gewinn</label><output id="pot">0</output></div>
+      <div class="display"><label>Bank</label><output id="bank">100</output></div>
+    </div>
+
+    <div class="ticker" id="msg" aria-live="polite"></div>
+
+    <div class="rail">
+      <div class="rungs" id="rungs" title="Risikoleiter" aria-label="Risikoleiter"></div>
+      <button class="joker" id="btn-joker" title="Joker: vyškrtne dve zlé možnosti (J)"><svg><use href="#i-joker"/></svg>Joker <span id="jokers">1</span></button>
+    </div>
+
+    <section class="window" id="reels" aria-label="Valce"></section>
+
+    <section class="window" id="ladder" aria-label="Risikoleiter" hidden>
+      <div class="flip down" id="card">
+        <div class="flip-inner">
+          <div class="bigcard card-front" id="card-front">
+            <div class="chip" id="card-odds"></div>
+            <div class="card-word" id="card-word">?</div>
+            <div class="card-info" id="card-info"></div>
+          </div>
+          <div class="card-back" aria-hidden="true">
+            <div class="medallion">?</div>
+            <div class="back-odds" id="card-back-odds"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="answers" id="answers">
+      <button class="ans g-der" data-a="der"><kbd>1</kbd>der</button>
+      <button class="ans g-die" data-a="die"><kbd>2</kbd>die</button>
+      <button class="ans g-das" data-a="das"><kbd>3</kbd>das</button>
+      <button class="ans g-none" data-a="-"><kbd>4</kbd>—</button>
+    </div>
+
+    <div class="controls" id="ctl-bet">
+      <div class="betbox">
+        <button class="sq" id="bet-minus" aria-label="Znížiť vklad">−</button>
+        <div class="display small"><label>Vklad</label><output id="bet">5</output></div>
+        <button class="sq" id="bet-plus" aria-label="Zvýšiť vklad">+</button>
+      </div>
+      <button class="big spin" id="btn-spin">SPIN</button>
+    </div>
+
+    <div class="controls" id="ctl-offer" hidden>
+      <button class="big cash" id="btn-cash">KASSIEREN<small id="cash-sub"></small></button>
+      <button class="big risk" id="btn-risk">RISIKO<small id="risk-sub"></small></button>
+    </div>
+  </main>
+
+  <dialog id="dlg-help">
+    <h2>Ako sa hrá</h2>
+    <ol>
+      <li><b>Vsaď</b> žetóny a stlač <b>SPIN</b>. Padnú tri slová.</li>
+      <li>Pri každom vyber člen: <b class="t-der">der</b> <b class="t-die">die</b> <b class="t-das">das</b> alebo <b class="t-none">—</b> (bez člena).</li>
+      <li>Každá správna odpoveď násobí výhru <b>kurzom</b> slova. Jedna chyba a vklad je preč.</li>
+      <li>Kurz určuje tvoja pamäť: slová, ktoré vieš, dávajú ×1,2; nové ×2; tie, čo si pokazil, ×3.</li>
+      <li><b>Drilling</b>: tri rovnaké členy v rade zdvojnásobia výhru.</li>
+      <li>Po výhre: <b>Kassieren</b> (zober výhru) alebo <b>Risiko</b>. Vidíš len kurz ďalšej karty, slovo až po rozhodnutí. Šesť priečok za sebou = <b>Jackpot</b>.</li>
+      <li>Za 5 správnych v sérii dostaneš <b>Jokera</b>, ktorý vyškrtne dve zlé možnosti.</li>
+      <li>Bankrot? V <b>Pfandhause</b> si žetóny odpracuješ na vlastných chybách.</li>
+    </ol>
+    <p class="keys">Klávesy: <kbd>1</kbd>–<kbd>4</kbd> člen · <kbd>medzerník</kbd> spin · <kbd>K</kbd> Kassieren · <kbd>R</kbd> Risiko · <kbd>J</kbd> Joker · <kbd>←</kbd><kbd>→</kbd> vklad · <kbd>T</kbd> testovací mód (zvýrazní správnu odpoveď)</p>
+    <form method="dialog"><button class="big spin">Rozumiem</button></form>
+  </dialog>
+
+  <dialog id="dlg-book">
+    <h2>Kniha dlžníkov</h2>
+    <div id="book-stats" class="stats"></div>
+    <h3>Úspešnosť podľa člena</h3>
+    <div id="book-bars"></div>
+    <h3>Dlžníci <span id="book-count"></span></h3>
+    <p class="hint">Slová, ktoré si naposledy pokazil. Na valcoch majú kurz ×3.</p>
+    <ul id="book-list" class="debtors"></ul>
+    <div class="dlg-actions">
+      <button id="btn-reset" class="link">Vymazať postup</button>
+      <form method="dialog"><button class="big spin">Zavrieť</button></form>
+    </div>
+  </dialog>
+
+  <dialog id="dlg-pawn">
+    <h2>Pfandhaus</h2>
+    <p class="hint" id="pawn-intro">Si na mizine. Odpracuj si žetóny na slovách, ktoré ti nejdú. Bez stávky, +10 za každú správnu odpoveď.</p>
+    <div class="pawn-progress" id="pawn-progress"></div>
+    <div class="bigcard" id="pawn-card">
+      <div class="card-word" id="pawn-word"></div>
+      <div class="card-info" id="pawn-info"></div>
+    </div>
+    <div class="answers" id="pawn-answers">
+      <button class="ans g-der" data-a="der"><kbd>1</kbd>der</button>
+      <button class="ans g-die" data-a="die"><kbd>2</kbd>die</button>
+      <button class="ans g-das" data-a="das"><kbd>3</kbd>das</button>
+      <button class="ans g-none" data-a="-"><kbd>4</kbd>—</button>
+    </div>
+    <button class="big spin" id="pawn-next" hidden>Ďalej</button>
+  </dialog>
+
+  <script src="js/words.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/ui.js"></script>
+</body>
+</html>
