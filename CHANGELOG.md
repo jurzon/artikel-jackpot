@@ -33,7 +33,7 @@ Prvá verejná verzia na https://jurzon.github.io/artikel-jackpot/.
 
 ### Technika
 - Statická PWA bez závislostí, offline cez service worker, inštalovateľná na plochu.
-- 17 testov hernej logiky (`node --test test/`), CI na GitHub Actions.
+- 17 testov hernej logiky (`node --test`), CI na GitHub Actions.
 - Žiadny server, žiadne sledovanie; postup v `localStorage`.
 
 [Unreleased]: https://github.com/jurzon/artikel-jackpot/compare/v1.0.0...HEAD

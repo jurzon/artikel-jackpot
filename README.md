@@ -79,7 +79,7 @@ python3 -m http.server 8080
 Testy hernej logiky (Node 20+, bez závislostí):
 
 ```bash
-node --test test/
+node --test
 ```
 
 ## Štruktúra
@@ -129,7 +129,7 @@ Písma Fraunces, Limelight a Outfit sú pod [SIL Open Font License 1.1](fonts/OF
 
 **Artikel Jackpot** turns the hardest part of German for Slovak learners, the articles *der / die / das*, into a casino game where your own memory sets the odds. Three words fall on the reels; you pick the article for each. Words you know pay ×1.2, new words ×2, words you got wrong ×3, because that is where learning and winning overlap. A Leitner box system keeps track, lost hands still reveal every word, telling suffixes are underlined in the gender colour, and revealed words are pronounced by the system's German voice. 386 items at A1–A2 level with Slovak translations.
 
-Static vanilla-JS PWA, works offline, no accounts, no tracking, nothing leaves the device. Play: https://jurzon.github.io/artikel-jackpot/ · Tests: `node --test test/` · License: CC BY-NC-SA 4.0, commercial licensing on request · Contact: Juraj Zonnenschein, jurzon@seznam.cz.
+Static vanilla-JS PWA, works offline, no accounts, no tracking, nothing leaves the device. Play: https://jurzon.github.io/artikel-jackpot/ · Tests: `node --test` · License: CC BY-NC-SA 4.0, commercial licensing on request · Contact: Juraj Zonnenschein, jurzon@seznam.cz.
 
 ## Deutsch
 

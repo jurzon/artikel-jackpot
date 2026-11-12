@@ -45,7 +45,7 @@ Pravidlá:
 Po úprave spusti testy a prejdi si pár rúk v testovacom móde (`T` v hre zvýrazní správnu odpoveď):
 
 ```bash
-node --test test/
+node --test
 python3 -m http.server 8080   # http://localhost:8080/
 ```
 
