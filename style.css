@@ -511,16 +511,13 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   border-radius: 16px;
   box-shadow: inset 0 0 0 5px var(--wine), inset 0 0 0 6px rgba(201,163,90,.6), 0 10px 22px rgba(0,0,0,.45);
 }
-.medallion {
-  width: 82px; height: 82px;
-  display: grid; place-items: center;
-  font: 400 46px/1 var(--display);
-  color: var(--brass-hi);
-  background: radial-gradient(circle at 40% 30%, #3a1422, #17070c);
-  border: 1.5px solid var(--brass);
-  border-radius: 50%;
-  box-shadow: 0 0 0 4px var(--wine), 0 0 0 5px rgba(201,163,90,.55);
-}
+.medallion { width: 104px; height: 104px; filter: drop-shadow(0 0 12px rgba(241,224,172,.35)) drop-shadow(0 4px 6px rgba(0,0,0,.5)); }
+.medallion .monogram { width: 100%; height: 100%; stroke: none; }
+.card-back .orn { position: absolute; width: 28px; height: 28px; stroke: none; opacity: .85; }
+.card-back .orn.tl { top: 12px; left: 12px; }
+.card-back .orn.tr { top: 12px; right: 12px; transform: rotate(90deg); }
+.card-back .orn.br { bottom: 12px; right: 12px; transform: rotate(180deg); }
+.card-back .orn.bl { bottom: 12px; left: 12px; transform: rotate(270deg); }
 .back-odds {
   padding: 2px 12px;
   font: 800 16px var(--serif);
@@ -779,6 +776,16 @@ b.t-das { background: var(--das); } b.t-none { background: var(--none); }
 .dlg-actions { display: flex; align-items: center; gap: 14px; margin-top: 16px; }
 .dlg-actions form { flex: 1; margin: 0; }
 .link { color: #f6a9b3; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; padding: 8px 0; }
+.pawn-sign {              /* tri zlaté gule: znak záložne, jemne sa hojdá */
+  display: block; width: 104px; height: 97px; margin: -8px auto 4px;
+  stroke: none;
+  transform-origin: 50% 8px;
+  filter: drop-shadow(0 8px 10px rgba(0,0,0,.55));
+  animation: sway 4.5s ease-in-out infinite;
+}
+@keyframes sway { 0%, 100% { transform: rotate(-2.2deg); } 50% { transform: rotate(2.2deg); } }
+.big .btn-ico { width: 30px; height: 28px; stroke: none; filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
+.big.wide { flex-direction: row; gap: 10px; }
 .pawn-progress { margin-bottom: 10px; text-align: center; font: 600 12px var(--sans); letter-spacing: 2px; text-transform: uppercase; color: var(--brass); }
 
 /* ---- rozloženie ------------------------------------------------------- */

@@ -304,7 +304,12 @@
     dockGroup = group;
     for (const id of ['ctl-bet', 'answers', 'ctl-offer']) $('#' + id).hidden = id !== group;
     $('#btn-spin').disabled = !idle;
-    $('#btn-spin').textContent = idle && broke ? 'PFANDHAUS' : 'SPIN';
+    const face = idle && broke ? 'pawn' : 'spin';
+    if ($('#btn-spin').dataset.face !== face) {
+      $('#btn-spin').dataset.face = face;
+      if (face === 'pawn') $('#btn-spin').innerHTML = '<svg class="btn-ico"><use href="#i-pawn"/></svg>PFANDHAUS';
+      else $('#btn-spin').textContent = 'SPIN';
+    }
     $('#btn-spin').classList.toggle('wide', idle && broke);
     $('#bet-minus').disabled = $('#bet-plus').disabled = !idle || broke;
     $('#btn-cash').disabled = $('#btn-risk').disabled = phase !== 'offer';
