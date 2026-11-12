@@ -1,0 +1,12 @@
+# systém
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# nástroje
+node_modules/
+*.log
+
+# dočasné testovacie stránky
+_shot.html
+_dbg.html
