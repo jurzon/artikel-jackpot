@@ -16,6 +16,9 @@
   const fmtOdds = (o) => '×' + String(o).replace('.', ',');
   const cap = (s) => s[0].toUpperCase() + s.slice(1);
   const later = (ms, fn) => setTimeout(fn, ms);
+  const dayKey = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  const plural = (n, [one, few, many]) => `${fmt(n)} ${n === 1 ? one : n >= 2 && n <= 4 ? few : many}`;
+  const buzz = (pattern) => { if (navigator.vibrate && !calm) navigator.vibrate(pattern); };
 
   let S = Store.load();
   let phase = 'bet';
@@ -318,7 +321,9 @@
       $('#risk-sub').replaceChildren(pips(next.odds), `${fmtOdds(next.odds)} → ${fmt(E.mult(pot, next.odds))}`);
     }
 
+    $('#reels').classList.toggle('fresh', hand.length === 0);
     rows.forEach((r, i) => r.classList.toggle('active', phase === 'answer' && i === idx));
+    renderCoach();
     [...$('#rungs').children].forEach((el, i) => {
       el.classList.toggle('on', i < rung);
       el.classList.toggle('next', inLadder && i === rung);
@@ -331,6 +336,7 @@
     if (phase !== 'bet') return;
     if (E.isBroke(S)) return openPawn();
     bet = E.clampBet(S, bet);
+    E.touchDay(S, dayKey());
     E.startHand(S, bet);
     hand = E.pickSpin(S, ITEMS).map((it) => ({ it, odds: E.oddsFor(S, it.id) }));
     used = new Set(hand.map((h) => h.it.id));
@@ -399,6 +405,7 @@
       idx++;
       if (idx < hand.length) {
         Sfx.right();
+        buzz(30);
         setMsg(`Richtig! ${fmtOdds(odds)} → ${fmt(pot)}.${memo || ' ' + say('right')}${jokerNote(res)}`, 'ok');
       } else {
         let text = `${say('line')} Výhra ${fmt(pot)}.`;
@@ -407,11 +414,13 @@
           text = `DRILLING! 3× ${LABEL[it.a]} → výhra ×2 = ${fmt(pot)}.`;
         }
         Sfx.win();
+        buzz([30, 40, 60]);
         flash('win');
         offer(text + memo + jokerNote(res) + ' Kassieren alebo Risiko?');
       }
     } else {
       Sfx.wrong();
+      buzz([60, 50, 60]);
       flash('lose', 500);
       // Lekcia zadarmo: zvyšné slová sa otočia po jednom, aby si ich hráč všimol.
       const rest = [];
@@ -517,6 +526,7 @@
         E.collect(S, pot);
         const note = recordWin(pot, true);
         Sfx.jackpot();
+        buzz([40, 40, 40, 40, 200]);
         flash('jackpot', 4000);
         const won = pot;
         pot = 0;
@@ -527,6 +537,7 @@
       }
     } else {
       Sfx.wrong();
+      buzz([60, 50, 60]);
       flash('lose', 500);
       const lost = pot;
       pot = 0;
@@ -573,6 +584,7 @@
   function pawnAnswer(a) {
     if (!pawn || pawn.answered) return;
     const it = pawn.list[pawn.i];
+    E.touchDay(S, dayKey());
     const res = E.record(S, it, a);
     pawn.answered = true;
     if (res.correct) {
@@ -725,6 +737,73 @@
     const sub = $('#lobby-sub');
     sub.hidden = !progress;
     if (progress) sub.textContent = `Bank ${fmt(S.bank)} · Jackpot ${fmt(S.jackpot)}`;
+    const t = S.stats.today;
+    const todayEl = $('#lobby-today');
+    const played = t && t.d === dayKey() && t.words > 0;
+    todayEl.hidden = !played;
+    if (played) {
+      const parts = [`Dnes ${plural(t.words, ['slovo', 'slová', 'slov'])}`, `${fmt(t.right)} správne`];
+      if (t.repaid) parts.push(plural(t.repaid, ['dlh splatený', 'dlhy splatené', 'dlhov splatených']));
+      if (S.stats.streakDays > 1) parts.push(`${S.stats.streakDays}. deň v rade`);
+      todayEl.textContent = parts.join(' · ');
+    }
+  }
+
+  // ---- sprievodca prvou rukou -------------------------------------------
+  // Štyri bubliny namiesto čítania pravidiel: SPIN, slovo a kurz, členy, Kassieren/Risiko.
+  const COACH = {
+    spin: { target: '#btn-spin', text: 'Vitaj v Spielbank. Vsaď žetóny a stlač SPIN. Padnú tri slová.' },
+    word: { target: '.reel.active .odds', text: 'Slovo a jeho kurz. Kurz určuje tvoja pamäť: nové slová ×2, istoty ×1,2, dlžníci ×3. Všetko sa násobí.' },
+    answer: { target: '#answers', text: 'Vyber člen: der, die, das, alebo — bez člena. Jedna chyba a vklad je preč, zvyšné slová však dostaneš zadarmo.' },
+    offer: { target: '#ctl-offer', text: 'Kassieren vezme výhru. Risiko ukáže len kurz ďalšej karty, slovo až po rozhodnutí. Šesť priečok v rade = Jackpot.' },
+  };
+  let coached = Store.getFlag('coached', false);
+  const coachSeen = new Set();
+
+  function coachStep() {
+    if (coached || document.querySelector('dialog[open]') || !$('#splash').classList.contains('out')) return null;
+    if (S.stats.hands > 1) { coached = true; Store.setFlag('coached', true); return null; }
+    let step = null;
+    if (phase === 'bet' && hand.length === 0) step = 'spin';
+    else if (phase === 'answer' && idx === 0) step = coachSeen.has('word') ? 'answer' : 'word';
+    else if (phase === 'offer') step = 'offer';
+    return step && !coachSeen.has(step) ? step : null;
+  }
+
+  function renderCoach() {
+    const el = $('#coach');
+    const step = coachStep();
+    el.hidden = !step;
+    if (!step) return;
+    $('#coach-text').textContent = COACH[step].text;
+    el.dataset.step = step;
+    placeCoach(step);
+  }
+
+  function placeCoach(step) {
+    const el = $('#coach');
+    const target = document.querySelector(COACH[step].target);
+    if (!target) return (el.hidden = true);
+    const t = target.getBoundingClientRect();
+    const above = t.top > innerHeight / 2;
+    el.classList.toggle('above', above);
+    el.classList.toggle('below', !above);
+    const w = el.offsetWidth;
+    const cx = t.left + t.width / 2;
+    const left = Math.max(16, Math.min(innerWidth - w - 16, cx - w / 2));
+    el.style.left = left + 'px';
+    el.style.setProperty('--ax', Math.max(18, Math.min(w - 18, cx - left)) + 'px');
+    if (above) { el.style.top = ''; el.style.bottom = (innerHeight - t.top + 12) + 'px'; }
+    else { el.style.bottom = ''; el.style.top = (t.bottom + 12) + 'px'; }
+  }
+
+  function coachNext() {
+    const step = $('#coach').dataset.step;
+    if (!step) return;
+    coachSeen.add(step);
+    if (step === 'offer') { coached = true; Store.setFlag('coached', true); }
+    Sfx.click();
+    renderCoach();
   }
 
   function toMenu() {
@@ -742,6 +821,7 @@
       parts.forEach((el) => { el.style.animation = ''; });
     }
     splash.classList.remove('out');
+    $('#coach').hidden = true;
     later(50, () => $('#btn-enter').focus({ preventScroll: true }));
   }
 
@@ -803,7 +883,7 @@
     if (introPlayed) Sfx.click(); else Sfx.intro();
     introPlayed = true;
     $('#btn-enter').blur();
-    if (S.stats.hands === 0) later(450, () => $('#dlg-help').showModal());
+    later(600, renderCoach);
   }
 
   // Ktoré hlasy systém ponúka (krupiér: sk/cs, slová: de).
@@ -826,6 +906,8 @@
     $('#btn-top').addEventListener('click', openTop);
     $('#btn-about').addEventListener('click', openAbout);
     $('#btn-menu').addEventListener('click', toMenu);
+    $('#coach').addEventListener('click', coachNext);
+    addEventListener('resize', () => renderCoach());
     $('#splash').addEventListener('click', (e) => {
       const b = e.target.closest('button');
       if (b) b.blur();

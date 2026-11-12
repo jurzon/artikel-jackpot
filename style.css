@@ -312,6 +312,25 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   box-shadow: 0 0 0 4px #0a1614, 0 0 0 5px var(--brass-hi), 0 0 38px rgba(241,224,172,.55), inset 0 8px 26px rgba(0,0,0,.5);
 }
 
+/* úvodná tabuľa, kým nepadla prvá ruka */
+.welcome {
+  flex: 1; min-height: calc(3 * var(--reel-h) + 2 * var(--wgap));
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  text-align: center;
+  color: var(--text);
+  background: linear-gradient(180deg, #fdf8ea, var(--paper) 40%, var(--paper-lo));
+  border-radius: 13px;
+  box-shadow: 0 2px 0 #b6a47c, 0 7px 14px rgba(0,0,0,.38);
+  position: relative;
+}
+.welcome::before { content: ""; position: absolute; inset: 6px; border: 1px solid rgba(125,95,42,.32); border-radius: 9px; outline: 1px solid rgba(125,95,42,.16); outline-offset: -5px; pointer-events: none; }
+.welcome .monogram { width: 92px; height: 92px; stroke: none; margin-bottom: 8px; filter: drop-shadow(0 3px 5px rgba(0,0,0,.3)); }
+.welcome .kicker { margin: 0; color: var(--brass-lo); }
+.welcome .open { margin: 2px 0 0; font: 400 34px/1.1 var(--display); letter-spacing: 4px; text-transform: uppercase; color: var(--text); }
+.welcome .motto { margin: 6px 0 0; font: italic 500 15px var(--serif); color: var(--muted); }
+#reels:not(.fresh) .welcome { display: none; }
+#reels.fresh .reel { display: none; }
+
 .reel {
   position: relative;
   display: grid;
@@ -599,6 +618,9 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .big:disabled { filter: saturate(.3) brightness(.55); }
 .big { min-width: 0; }
 .cash, .risk, .big.wide { font-size: 19px; letter-spacing: 2px; }
+.big .side-ico { position: absolute; left: 11px; top: 50%; translate: 0 -50%; width: 26px; height: 26px; stroke: none; opacity: .8; }
+.cash, .risk { padding-left: 34px; }
+@media (max-width: 400px) { .big .side-ico { display: none; } .cash, .risk { padding-left: 12px; } }
 .risk {
   color: var(--brass-hi);
   background: linear-gradient(180deg, #2a1a12, #120c08);
@@ -776,6 +798,32 @@ b.t-das { background: var(--das); } b.t-none { background: var(--none); }
 .dlg-actions { display: flex; align-items: center; gap: 14px; margin-top: 16px; }
 .dlg-actions form { flex: 1; margin: 0; }
 .link { color: #f6a9b3; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; padding: 8px 0; }
+/* sprievodca prvou rukou: papierová bublina so šípkou */
+.coach {
+  position: fixed; z-index: 7;
+  width: min(270px, calc(100vw - 32px));
+  padding: 12px 14px 10px;
+  text-align: left;
+  font: 500 14px/1.4 var(--sans);
+  color: var(--text);
+  background: linear-gradient(180deg, #fffaec, var(--paper));
+  border: 1px solid var(--brass);
+  border-radius: 12px;
+  box-shadow: 0 0 0 3px rgba(201,163,90,.35), 0 14px 30px rgba(0,0,0,.55);
+  animation: coach-in .3s ease-out;
+}
+.coach small { display: block; margin-top: 6px; font: 600 10px var(--sans); letter-spacing: 2px; text-transform: uppercase; color: var(--brass-lo); }
+.coach::after {
+  content: ""; position: absolute; left: var(--ax, 50%); width: 14px; height: 14px;
+  background: var(--paper); border: 1px solid var(--brass); transform: translateX(-50%) rotate(45deg);
+}
+.coach.above::after { bottom: -8px; border-top: 0; border-left: 0; }
+.coach.below::after { top: -8px; border-bottom: 0; border-right: 0; background: #fffaec; }
+@keyframes coach-in { from { opacity: 0; transform: translateY(6px); } }
+body:has(dialog[open]) .coach { display: none; }   /* pod dialógom bublina mlčí */
+
+.lobby-sub.today { margin-top: 4px; font-size: 12.5px; color: var(--brass); opacity: 1; animation-delay: 1.32s; }
+
 .pawn-sign {              /* tri zlaté gule: znak záložne, jemne sa hojdá */
   display: block; width: 104px; height: 97px; margin: -8px auto 4px;
   stroke: none;

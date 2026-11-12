@@ -37,6 +37,8 @@
         jackpots: 0,
         byArticle: { der: [0, 0], die: [0, 0], das: [0, 0], '-': [0, 0] },
         top: [],          // Top 10 vyplatených výhier: { amount, bet, words, rungs, jackpot, t }
+        today: { d: '', words: 0, right: 0, repaid: 0 },   // dnešná zmena
+        streakDays: 0,    // koľko dní po sebe hráč hral
       },
     };
   }
@@ -70,9 +72,32 @@
 
   // ---- odpoveď -----------------------------------------------------------
 
+  // Otočí dennú zmenu: nový deň vynuluje dnešné počty a posunie sériu dní.
+  function touchDay(state, day) {
+    const st = state.stats;
+    if (!st.today) st.today = { d: '', words: 0, right: 0, repaid: 0 };
+    if (st.today.d === day) return;
+    st.streakDays = st.today.d && daysBetween(st.today.d, day) === 1 ? (st.streakDays || 0) + 1 : 1;
+    st.today = { d: day, words: 0, right: 0, repaid: 0 };
+  }
+
+  function daysBetween(a, b) {
+    const utc = (s) => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d); };
+    return Math.round((utc(b) - utc(a)) / 86400000);
+  }
+
   function record(state, item, answer) {
     const correct = answer === item.a;
     const rec = state.words[item.id] || (state.words[item.id] = { box: 1, right: 0, wrong: 0, debt: false, last: 0 });
+    const wasDebt = rec.debt;
+    const today = state.stats.today;
+    if (today) {
+      today.words++;
+      if (correct) {
+        today.right++;
+        if (wasDebt) today.repaid++;
+      }
+    }
     rec.last = state.spin;
     const by = state.stats.byArticle[item.a];
     by[1]++;
@@ -269,7 +294,7 @@
 
   const Engine = {
     C, ARTICLES, newState, tier, oddsFor, stars, mult, record, pickSpin, pickLadder, debtors, pawnPick,
-    isBroke, clampBet, stepBet, startHand, isDrilling, collect, recordTop, winJackpot, ruleFor, ruleMatch,
+    isBroke, clampBet, stepBet, startHand, isDrilling, collect, recordTop, winJackpot, ruleFor, ruleMatch, touchDay,
   };
 
   root.Engine = Engine;

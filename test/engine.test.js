@@ -197,3 +197,26 @@ test('ruleMatch ukáže kus slova, ktorý pravidlo označuje', () => {
     else assert.ok(it.text.startsWith(m.part), it.id);
   }
 });
+
+test('denná zmena: počty za deň a séria dní', () => {
+  const s = E.newState();
+  E.touchDay(s, '2026-11-10');
+  assert.equal(s.stats.streakDays, 1);
+  E.record(s, byId('Tisch'), 'der');
+  E.record(s, byId('Frau'), 'das');
+  assert.deepEqual(s.stats.today, { d: '2026-11-10', words: 2, right: 1, repaid: 0 });
+  E.touchDay(s, '2026-11-10');                       // ten istý deň nič nemení
+  assert.equal(s.stats.today.words, 2);
+  E.touchDay(s, '2026-11-11');                       // ďalší deň: séria rastie, počty od nuly
+  assert.equal(s.stats.streakDays, 2);
+  assert.equal(s.stats.today.words, 0);
+  E.record(s, byId('Frau'), 'die');                  // dlžník splatený
+  assert.equal(s.stats.today.repaid, 1);
+  E.touchDay(s, '2026-11-14');                       // medzera: séria od jednotky
+  assert.equal(s.stats.streakDays, 1);
+  const old = E.newState();
+  delete old.stats.today;                            // starý save bez dennej zmeny
+  E.record(old, byId('Tisch'), 'der');
+  E.touchDay(old, '2026-11-14');
+  assert.equal(old.stats.today.d, '2026-11-14');
+});

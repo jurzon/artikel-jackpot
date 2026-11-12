@@ -57,6 +57,20 @@
       <ellipse cx="80" cy="38" rx="4.5" ry="3" fill="#fffbea" opacity=".7" stroke="none" transform="rotate(-35 80 38)"/>
       <ellipse cx="54" cy="77" rx="4.5" ry="3" fill="#fffbea" opacity=".7" stroke="none" transform="rotate(-35 54 77)"/>
     </symbol>
+    <symbol id="i-rake" viewBox="0 0 32 32">
+      <path d="M4 28L19 13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M15 9l8 8M19 5l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M17 11l-4-4M21 7l-4-4M25 11l-4-4M29 7l-4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" transform="translate(-2 6)"/>
+      <circle cx="9.5" cy="9.5" r="3.5" fill="currentColor" stroke="none" opacity=".9"/>
+      <circle cx="5" cy="15" r="2.6" fill="currentColor" stroke="none" opacity=".7"/>
+    </symbol>
+    <symbol id="i-risk" viewBox="0 0 32 32">
+      <rect x="4" y="5" width="13" height="18" rx="2" transform="rotate(-12 10.5 14)" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <rect x="11" y="4" width="13" height="18" rx="2" transform="rotate(8 17.5 13)" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <path d="M17.5 8.5l2.2 3.2-2.2 3.2-2.2-3.2z" fill="currentColor" stroke="none" transform="rotate(8 17.5 13)"/>
+      <rect x="18" y="19" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <circle cx="20.8" cy="21.8" r="1.1" fill="currentColor" stroke="none"/><circle cx="25.2" cy="26.2" r="1.1" fill="currentColor" stroke="none"/><circle cx="23" cy="24" r="1.1" fill="currentColor" stroke="none"/>
+    </symbol>
     <symbol id="i-crown" viewBox="0 0 24 24"><path d="M4.500 17L3 7.500l5 3.800L12 5l4 6.300 5-3.800L19.500 17zM5 20h14"/></symbol>
   </svg>
 
@@ -69,6 +83,7 @@
       <p class="tagline">Nemecké členy v kasíne,<br>kde bankuje tvoja pamäť.</p>
       <button class="big spin" id="btn-enter">Hrať</button>
       <p class="lobby-sub" id="lobby-sub" hidden></p>
+      <p class="lobby-sub today" id="lobby-today" hidden></p>
       <nav class="lobby" aria-label="Menu">
         <button class="lobby-link" id="btn-new" hidden>Nová hra</button>
         <button class="lobby-link" id="btn-top">Top 10</button>
@@ -80,6 +95,7 @@
 
   <main class="cabinet" id="cabinet">
     <div class="fx" id="fx" aria-hidden="true"></div>
+    <button class="coach" id="coach" hidden><span id="coach-text"></span><small>ťukni, ideme ďalej</small></button>
 
     <!-- stav hry -->
     <section class="side">
@@ -121,7 +137,14 @@
 
     <!-- hracia plocha -->
     <section class="play">
-      <section class="window" id="reels" aria-label="Valce"></section>
+      <section class="window" id="reels" aria-label="Valce">
+        <div class="welcome" aria-hidden="true">
+          <svg class="monogram"><use href="#i-monogram"/></svg>
+          <p class="kicker">Spielbank der Artikel</p>
+          <p class="open">Otvorené</p>
+          <p class="motto">Tri slová. Tri členy. Jeden bank.</p>
+        </div>
+      </section>
 
       <section class="window" id="ladder" aria-label="Risikoleiter" hidden>
         <div class="flip down" id="card">
@@ -160,8 +183,8 @@
         </div>
 
         <div class="controls" id="ctl-offer" hidden>
-          <button class="big cash" id="btn-cash">KASSIEREN<small id="cash-sub"></small></button>
-          <button class="big risk" id="btn-risk">RISIKO<small id="risk-sub"></small></button>
+          <button class="big cash" id="btn-cash"><svg class="side-ico"><use href="#i-rake"/></svg>KASSIEREN<small id="cash-sub"></small></button>
+          <button class="big risk" id="btn-risk"><svg class="side-ico"><use href="#i-risk"/></svg>RISIKO<small id="risk-sub"></small></button>
         </div>
       </div>
     </section>
