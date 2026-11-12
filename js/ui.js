@@ -804,13 +804,9 @@
   // Ktoré hlasy systém ponúka (krupiér: sk/cs, slová: de).
   function showVoiceStatus() {
     const el = $('#voice-status');
-    const sk = Voice.voiceName(['sk', 'cs']);
     const de = Voice.voiceName(['de']);
-    el.replaceChildren(
-      'Hlas krupiéra: ', sk ? sk : 'žiadny slovenský hlas (doinštaluj ho v systéme, napr. Windows → Jazyk → Slovenčina → Reč). ',
-      sk ? ' · ' : '',
-      'Výslovnosť slov: ', de ? de : 'žiadny nemecký hlas.',
-    );
+    el.replaceChildren('Výslovnosť slov: ', de ? `${de} (po odhalení sa slovo prečíta s členom).` : 'žiadny nemecký hlas. V Chrome a Edge býva online, inak ho doinštaluj v systéme (Windows → Jazyk → Nemčina → Reč).');
+    if (Voice.croupierSpeaks()) el.append(' Hlas krupiéra: ', Voice.voiceName(['sk', 'cs']) || 'žiadny slovenský hlas.');
   }
 
   function setTestMode(on) {

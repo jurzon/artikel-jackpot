@@ -197,13 +197,18 @@
   }
   if (synth && typeof synth.getVoices === 'function') synth.getVoices();   // naštartuje načítanie hlasov
 
+  // Slovenský hlas krupiéra je vypnutý: systémové slovenské hlasy znejú mechanicky.
+  // Zapnúť, keď budú k dispozícii lepšie (neurálne) hlasy.
+  const CROUPIER_SPEAKS = false;
+
   root.Voice = {
     // nemecké slovo alebo veta, pokojne a zreteľne
     word: (text) => utter(text, ['de'], 0.9, 1),
     // krupiérova hláška; preruší, čo práve hovorí
-    croupier: (text) => { if (synth && enabled) synth.cancel(); utter(text, ['sk', 'cs'], 1.05, 0.9); },
+    croupier: (text) => { if (!CROUPIER_SPEAKS) return; if (synth && enabled) synth.cancel(); utter(text, ['sk', 'cs'], 1.05, 0.9); },
     // krupiérova hláška po slove: nechá slovo dohovoriť
-    after: (text) => utter(text, ['sk', 'cs'], 1.05, 0.9),
+    after: (text) => { if (CROUPIER_SPEAKS) utter(text, ['sk', 'cs'], 1.05, 0.9); },
+    croupierSpeaks: () => CROUPIER_SPEAKS,
     stop: () => { if (synth) synth.cancel(); },
     voiceName: (langs) => { const v = voiceFor(langs); return v ? v.name.replace(/Microsoft |Google /, '') : ''; },
   };
