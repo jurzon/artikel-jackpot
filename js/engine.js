@@ -16,6 +16,7 @@
     PAWN_ROUNDS: 5,
     PAWN_REWARD: 10,
     PAWN_BONUS: 10,
+    TOP_N: 10,
   };
 
   const ARTICLES = ['der', 'die', 'das', '-'];
@@ -35,6 +36,7 @@
         bestWin: 0,
         jackpots: 0,
         byArticle: { der: [0, 0], die: [0, 0], das: [0, 0], '-': [0, 0] },
+        top: [],          // Top 10 vyplatených výhier: { amount, bet, words, rungs, jackpot, t }
       },
     };
   }
@@ -211,6 +213,18 @@
     if (pot > state.stats.bestWin) state.stats.bestWin = pot;
   }
 
+  // Zapíše výhru do Top 10. Vráti poradie 1..TOP_N, alebo 0, ak sa nedostala.
+  // Pri rovnakej sume ostáva skoršia výhra vyššie.
+  function recordTop(state, entry) {
+    const top = state.stats.top || (state.stats.top = []);
+    let i = 0;
+    while (i < top.length && top[i].amount >= entry.amount) i++;
+    if (i >= C.TOP_N) return 0;
+    top.splice(i, 0, entry);
+    if (top.length > C.TOP_N) top.length = C.TOP_N;
+    return i + 1;
+  }
+
   function winJackpot(state) {
     const amount = state.jackpot;
     state.jackpot = C.JACKPOT_SEED;
@@ -231,24 +245,31 @@
     ['o', 'das', 'často'], ['er', 'der', 'často'], ['e', 'die', 'väčšinou'],
   ];
 
-  // Vráti pravidlo len vtedy, keď pre dané slovo naozaj platí (výnimky nič nedostanú).
-  function ruleFor(item) {
+  // Pravidlo len vtedy, keď pre dané slovo naozaj platí (výnimky nič nedostanú).
+  // Vracia { text, part, at }: part je kus slova, ktorý pravidlo označuje
+  // ('ung' na konci, 'Ge' na začiatku), alebo null, keď sa nedá ukázať v slove.
+  function ruleMatch(item) {
     if (item.kind !== 'noun') return null;
-    if (item.a === 'der' && TIME_WORDS.has(item.text)) return 'dni, mesiace, ročné obdobia → der';
+    if (item.a === 'der' && TIME_WORDS.has(item.text)) return { text: 'dni, mesiace, ročné obdobia → der', part: null, at: null };
     const w = item.text.toLowerCase();
     for (const [suffix, art, how] of SUFFIX_RULES) {
       if (w.length > suffix.length + 1 && w.endsWith(suffix)) {
-        if (art === item.a) return `-${suffix} → ${how} ${art}`;
+        if (art === item.a) return { text: `-${suffix} → ${how} ${art}`, part: item.text.slice(-suffix.length), at: 'end' };
         break;
       }
     }
-    if (item.a === 'das' && w.length >= 6 && w.startsWith('ge')) return 'Ge- → často das';
+    if (item.a === 'das' && w.length >= 6 && w.startsWith('ge')) return { text: 'Ge- → často das', part: item.text.slice(0, 2), at: 'start' };
     return null;
+  }
+
+  function ruleFor(item) {
+    const m = ruleMatch(item);
+    return m ? m.text : null;
   }
 
   const Engine = {
     C, ARTICLES, newState, tier, oddsFor, stars, mult, record, pickSpin, pickLadder, debtors, pawnPick,
-    isBroke, clampBet, stepBet, startHand, isDrilling, collect, winJackpot, ruleFor,
+    isBroke, clampBet, stepBet, startHand, isDrilling, collect, recordTop, winJackpot, ruleFor, ruleMatch,
   };
 
   root.Engine = Engine;

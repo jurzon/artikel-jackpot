@@ -5,6 +5,7 @@
   const ITEMS = window.ITEMS;
   const Store = window.Store;
   const Sfx = window.Sfx;
+  const Voice = window.Voice;
 
   const $ = (s) => document.querySelector(s);
   const LABEL = { der: 'der', die: 'die', das: 'das', '-': '—' };
@@ -28,6 +29,8 @@
   let used = new Set();
   let struck = new Set();
   let jokerUsed = false;
+  let ladderWords = [];   // správne zodpovedané karty rebríka (pre Top 10)
+  let introPlayed = false;
   let pawn = null;
   let dockGroup = 'ctl-bet';
   let dockLockUntil = 0;
@@ -49,6 +52,104 @@
 
   function infoText(it) {
     return [it.sk, E.ruleFor(it) || it.note].filter(Boolean).join(' · ');
+  }
+
+  // Slovo po odhalení: člen vo farbe rodu a zvýraznená koncovka/predpona, ak platí pravidlo.
+  function richWord(it) {
+    const frag = document.createDocumentFragment();
+    const art = (txt) => {
+      const b = document.createElement('b');
+      b.className = 'art ' + CCLASS[it.a];
+      b.textContent = txt;
+      return b;
+    };
+    if (it.kind === 'phrase') {
+      if (it.a === '-') { frag.append(it.text.replace('___ ', '')); return frag; }
+      const [pre, post] = it.text.split('___');
+      frag.append(pre, art(pre === '' ? cap(it.a) : it.a), post);
+      return frag;
+    }
+    if (it.a !== '-') frag.append(art(it.a), ' ');
+    const m = E.ruleMatch(it);
+    if (m && m.part) {
+      const mark = document.createElement('mark');
+      mark.className = 'ending ' + CCLASS[it.a];
+      mark.textContent = m.part;
+      if (m.at === 'end') frag.append(it.text.slice(0, -m.part.length), mark);
+      else frag.append(mark, it.text.slice(m.part.length));
+    } else {
+      frag.append(it.text);
+    }
+    return frag;
+  }
+
+  function setRichWord(el, it) {
+    el.replaceChildren(richWord(it));
+    el.classList.toggle('long', filled(it).length > 16);
+  }
+
+  // Preklad a krupiérov tip (pravidlo alebo poznámka) ako dva oddelené kusy.
+  function setInfo(el, it) {
+    el.replaceChildren();
+    if (it.sk) el.append(it.sk);
+    const tip = E.ruleFor(it) || it.note;
+    if (tip) {
+      const i = document.createElement('i');
+      i.className = 'tip';
+      i.textContent = tip;
+      el.append(it.sk ? ' ' : '', i);
+    }
+  }
+
+  // Štítok úrovne slova podľa osobnej histórie (to isté, čo určuje kurz).
+  function tierLabel(id) {
+    const rec = S.words[id];
+    if (!rec) return 'nové';
+    if (rec.debt || rec.box === 0) return 'dlžník';
+    if (rec.box <= 2) return 'neisté';
+    return 'istota';
+  }
+
+  // ---- krupiér -----------------------------------------------------------
+  // Krátke hlášky s charakterom; nikdy dvakrát tá istá za sebou.
+  const VOICE = {
+    spin: ['Faites vos jeux… valce sa točia.', 'Krupiér točí.', 'Valce sa točia…', 'Les jeux sont faits.'],
+    ask: ['Aký člen patrí k označenému slovu?', 'Krupiér čaká. Der, die, das, alebo nič?', 'Tvoj ťah. Ktorý člen?', 'Slovo je na stole. Člen?'],
+    right: ['Sauber.', 'Krupiér kývne.', 'Pokračuj.', 'Presne tak.', 'Bez zaváhania.'],
+    line: ['Línia!', 'Tri z troch!', 'Čistá línia!', 'Krupiér tlieska.'],
+    wrong: ['Dom ďakuje.', 'Au weia.', 'Krupiér zhrabne žetóny.', 'Dnes nie.', 'Tak to v kasíne chodí.'],
+    cash: ['Rozumné.', 'Žetóny sú tvoje.', 'Krupiér vypláca.', 'Odchádzaš bohatší.'],
+    risk: ['Odvaha sa cení.', 'Karta je na stole.', 'Krupiér zdvihne obočie.', 'Všetko, alebo nič.'],
+    ladderRight: ['Vyššie.', 'Ešte raz?', 'Rebrík drží.', 'Nervy zo železa.'],
+    ladderWrong: ['Tak blízko.', 'Rebrík sa zlomil.', 'Dom si to berie späť.', 'Risiko je Risiko.'],
+  };
+  const lastLine = {};
+  const SPOKEN_AFTER_WORD = new Set(['right', 'line', 'wrong', 'ladderRight', 'ladderWrong']);
+  function say(pool) {
+    const arr = VOICE[pool];
+    let i;
+    do i = Math.floor(Math.random() * arr.length); while (arr.length > 1 && i === lastLine[pool]);
+    lastLine[pool] = i;
+    const line = arr[i];
+    if (SPOKEN_AFTER_WORD.has(pool)) Voice.after(line); else Voice.croupier(line);
+    return line;
+  }
+
+  // Po odhalení prečíta slovo s členom nemeckým hlasom (preruší predošlú reč).
+  function pronounce(it) {
+    Voice.stop();
+    Voice.word(filled(it));
+  }
+
+  // Osobná pamäť: koľkokrát ťa slovo zhodilo, alebo že si splatil dlh.
+  function memoryNote(it, res, wasDebt) {
+    const rec = S.words[it.id];
+    if (!rec) return '';
+    let note = '';
+    if (!res.correct && rec.wrong >= 2) note = `${it.text} ťa zhodil už ${rec.wrong}. raz.`;
+    else if (res.correct && wasDebt) note = `${it.text} splatený, Kniha dlžníkov je ľahšia.`;
+    if (note) Voice.after(note);
+    return note ? ' ' + note : '';
   }
 
   function setMsg(text, cls) {
@@ -155,17 +256,18 @@
     row.querySelector('.word').textContent = '';
     row.querySelector('.info').textContent = '';
     row.querySelector('.odds').textContent = '';
+    row.querySelector('.odds').removeAttribute('data-label');
   }
 
   function revealRow(i, mode) {
     const row = rows[i];
     const it = hand[i].it;
-    row.classList.add(mode);
+    row.classList.add(...mode.split(' '));
     const slot = row.querySelector('.slot');
     slot.textContent = LABEL[it.a];
     slot.classList.add(GCLASS[it.a]);
-    if (it.kind === 'phrase') setWord(row.querySelector('.word'), filled(it));
-    row.querySelector('.info').textContent = infoText(it);
+    setRichWord(row.querySelector('.word'), it);
+    setInfo(row.querySelector('.info'), it);
   }
 
   function render() {
@@ -194,6 +296,7 @@
     });
     $('#testbar').hidden = !testMode;
     $('#t-broke').disabled = !idle;
+    $('#btn-menu').disabled = !idle;
     $('#btn-joker').disabled = !answering || jokerUsed || S.jokers < 1;
 
     // Akčný panel ukazuje jedinú skupinu: vklad+SPIN, členy, alebo Kassieren/Risiko.
@@ -232,11 +335,13 @@
     card = next = null;
     struck = new Set();
     jokerUsed = false;
+    ladderWords = [];
     Store.save(S);
 
     phase = 'spinning';
     showPanel('reels');
-    setMsg('Valce sa točia…');
+    Voice.stop();
+    setMsg(say('spin'));
     render();
 
     rows.forEach((row, i) => {
@@ -252,11 +357,12 @@
         row.classList.remove('spinning');
         setWord(word, hand[i].it.text);
         row.querySelector('.odds').textContent = fmtOdds(hand[i].odds);
+        row.querySelector('.odds').dataset.label = tierLabel(hand[i].it.id);
         row.dataset.stars = E.stars(hand[i].odds);
         Sfx.stop();
         if (i === 2) {
           phase = 'answer';
-          setMsg('Aký člen patrí k označenému slovu?');
+          setMsg(say('ask'));
           render();
         }
       });
@@ -275,33 +381,41 @@
 
   function answerReel(a) {
     const { it, odds } = hand[idx];
+    const wasDebt = !!(S.words[it.id] && S.words[it.id].debt);
     const res = E.record(S, it, a);
     struck = new Set();
     jokerUsed = false;
     revealRow(idx, res.correct ? 'ok' : 'bad');
+    pronounce(it);
+    const memo = memoryNote(it, res, wasDebt);
 
     if (res.correct) {
       pot = E.mult(pot, odds);
       idx++;
       if (idx < hand.length) {
         Sfx.right();
-        setMsg(`Richtig! ${fmtOdds(odds)} → ${fmt(pot)}.${jokerNote(res)}`, 'ok');
+        setMsg(`Richtig! ${fmtOdds(odds)} → ${fmt(pot)}.${memo || ' ' + say('right')}${jokerNote(res)}`, 'ok');
       } else {
-        let text = `Línia! Výhra ${fmt(pot)}.`;
+        let text = `${say('line')} Výhra ${fmt(pot)}.`;
         if (E.isDrilling(hand.map((h) => h.it))) {
           pot *= E.C.DRILLING;
           text = `DRILLING! 3× ${LABEL[it.a]} → výhra ×2 = ${fmt(pot)}.`;
         }
         Sfx.win();
         flash('win');
-        offer(text + jokerNote(res) + ' Kassieren alebo Risiko?');
+        offer(text + memo + jokerNote(res) + ' Kassieren alebo Risiko?');
       }
     } else {
       Sfx.wrong();
       flash('lose', 500);
-      for (let i = idx + 1; i < hand.length; i++) revealRow(i, 'dim');
+      // Lekcia zadarmo: zvyšné slová sa otočia po jednom, aby si ich hráč všimol.
+      const rest = [];
+      for (let i = idx + 1; i < hand.length; i++) rest.push(i);
+      rest.forEach((i, k) => later(calm ? 0 : 420 + k * 380, () => {
+        if (hand[i] && rows[i].classList.contains('spinning') === false) revealRow(i, 'dim lesson');
+      }));
       pot = 0;
-      endHand(`Falsch! Správne: ${filled(it)}. Vklad ${fmt(bet)} je preč.`, 'bad');
+      endHand(`Falsch! Správne: ${filled(it)}. Vklad ${fmt(bet)} je preč.${memo || ' ' + say('wrong')}`, 'bad');
     }
     Store.save(S);
     render();
@@ -324,14 +438,23 @@
     setMsg(text, 'ok');
   }
 
+  // Zapíše výhru do Top 10 a vráti dovetok do tickera.
+  function recordWin(amount, jackpot) {
+    const words = hand.map((h) => filled(h.it)).concat(ladderWords);
+    const rank = E.recordTop(S, { amount, bet, words, rungs: rung, jackpot, t: Date.now() });
+    return rank ? ` Top 10: #${rank}!` : '';
+  }
+
   function cash() {
     if (phase !== 'offer') return;
     E.collect(S, pot);
+    const note = recordWin(pot, false);
     Sfx.cash();
     flash('win');
     const won = pot;
     pot = 0;
-    endHand(`Kassiert! +${fmt(won)} žetónov.`, 'ok');
+    endHand(`Kassiert! +${fmt(won)} žetónov. ${say('cash')}${note}`, 'ok');
+    if (note) Voice.after(`Top 10, miesto ${note.match(/#(\d+)/)[1]}.`);
     Store.save(S);
     render();
   }
@@ -349,9 +472,11 @@
     $('#card-info').textContent = '';
     $('#card-odds').textContent = fmtOdds(card.odds);
     $('#card-odds').dataset.stars = E.stars(card.odds);
+    $('#card-odds').dataset.label = tierLabel(card.it.id);
     $('#card-back-odds').replaceChildren(pips(card.odds), fmtOdds(card.odds));
+    $('#card-back-odds').dataset.label = tierLabel(card.it.id);
     showPanel('ladder');
-    setMsg(`Risiko! V hre je ${fmt(pot)}.`);
+    setMsg(`Risiko! V hre je ${fmt(pot)}. ${say('risk')}`);
     render();
     void el.offsetWidth;
     el.classList.remove('instant');
@@ -367,35 +492,40 @@
 
   function answerCard(a) {
     const { it, odds } = card;
+    const wasDebt = !!(S.words[it.id] && S.words[it.id].debt);
     const res = E.record(S, it, a);
+    pronounce(it);
+    const memo = memoryNote(it, res, wasDebt);
     struck = new Set();
     jokerUsed = false;
     $('#card-front').classList.add(res.correct ? 'ok' : 'bad', CCLASS[it.a]);
-    setWord($('#card-word'), filled(it));
-    $('#card-info').textContent = infoText(it);
+    setRichWord($('#card-word'), it);
+    setInfo($('#card-info'), it);
 
     if (res.correct) {
       pot = E.mult(pot, odds);
       rung++;
+      ladderWords.push(filled(it));
       if (rung >= E.C.MAX_RUNG) {
         const jp = E.winJackpot(S);
         pot += jp;
         E.collect(S, pot);
+        const note = recordWin(pot, true);
         Sfx.jackpot();
         flash('jackpot', 4000);
         const won = pot;
         pot = 0;
-        endHand(`JACKPOT! +${fmt(jp)} navyše, spolu +${fmt(won)} žetónov!`, 'jackpot');
+        endHand(`JACKPOT! +${fmt(jp)} navyše, spolu +${fmt(won)} žetónov!${note}`, 'jackpot');
       } else {
         Sfx.right();
-        offer(`Richtig! ${fmtOdds(odds)} → ${fmt(pot)}. Priečka ${rung}/${E.C.MAX_RUNG}.${jokerNote(res)}`);
+        offer(`Richtig! ${fmtOdds(odds)} → ${fmt(pot)}. Priečka ${rung}/${E.C.MAX_RUNG}.${memo || ' ' + say('ladderRight')}${jokerNote(res)}`);
       }
     } else {
       Sfx.wrong();
       flash('lose', 500);
       const lost = pot;
       pot = 0;
-      endHand(`Falsch! Správne: ${filled(it)}. Prehral si ${fmt(lost)}.`, 'bad');
+      endHand(`Falsch! Správne: ${filled(it)}. Prehral si ${fmt(lost)}.${memo || ' ' + say('ladderWrong')}`, 'bad');
     }
     Store.save(S);
     render();
@@ -448,8 +578,10 @@
       Sfx.wrong();
     }
     $('#pawn-card').classList.add(res.correct ? 'ok' : 'bad', CCLASS[it.a]);
-    setWord($('#pawn-word'), filled(it));
-    $('#pawn-info').textContent = (res.correct ? `Richtig! +${E.C.PAWN_REWARD} · ` : 'Falsch · ') + infoText(it);
+    pronounce(it);
+    setRichWord($('#pawn-word'), it);
+    setInfo($('#pawn-info'), it);
+    $('#pawn-info').prepend(res.correct ? `Richtig! +${E.C.PAWN_REWARD} · ` : 'Falsch · ');
     $('#pawn-progress').textContent = `${pawn.i + 1} / ${pawn.list.length} · zarobené ${pawn.earned}`;
     document.querySelectorAll('#pawn-answers .ans').forEach((b) => (b.disabled = true));
     const btn = $('#pawn-next');
@@ -538,20 +670,115 @@
     $('#dlg-book').showModal();
   }
 
-  function resetAll() {
-    if (!confirm('Naozaj vymazať celý postup, bank aj štatistiky?')) return;
+  // Čistý stav hry; Top 10 sa zachová, ak ho volajúci podá.
+  function applyReset(keepTop) {
     S = E.newState();
+    if (keepTop) S.stats.top = keepTop;
     Store.save(S);
     phase = 'bet';
     bet = E.C.MIN_BET;
     pot = 0;
     rung = 0;
     hand = [];
+    card = next = null;
+    used = new Set();
+    struck = new Set();
+    jokerUsed = false;
+    ladderWords = [];
     rows.forEach(resetRow);
     showPanel('reels');
-    $('#dlg-book').close();
     setMsg('Nová hra. Vsaď a stlač SPIN.');
+    renderLobby();
     render();
+  }
+
+  // Kniha dlžníkov: vymaže naozaj všetko, aj Top 10.
+  function resetAll() {
+    if (!confirm('Naozaj vymazať celý postup, bank, štatistiky aj Top 10?')) return;
+    applyReset(null);
+    $('#dlg-book').close();
+  }
+
+  // Lobby: nová hra zachová Top 10 (ako na automate).
+  function newGame() {
+    if (!confirm('Začať odznova? Bank, jackpot aj pamäť slov sa vynulujú. Top 10 ostane.')) return;
+    applyReset(S.stats.top || []);
+    Sfx.click();
+    enter();
+  }
+
+  // ---- lobby -------------------------------------------------------------
+
+  function hasProgress() {
+    return S.stats.hands > 0 || S.bank !== E.C.START_BANK;
+  }
+
+  function renderLobby() {
+    const progress = hasProgress();
+    $('#btn-enter').textContent = progress ? 'Pokračovať' : 'Hrať';
+    $('#btn-new').hidden = !progress;
+    const sub = $('#lobby-sub');
+    sub.hidden = !progress;
+    if (progress) sub.textContent = `Bank ${fmt(S.bank)} · Jackpot ${fmt(S.jackpot)}`;
+  }
+
+  function toMenu() {
+    if (phase !== 'bet' || document.querySelector('dialog[open]')) return;
+    const splash = $('#splash');
+    if (!splash.classList.contains('out')) return;
+    Store.save(S);
+    renderLobby();
+    Sfx.click();
+    // Úvodná kaskáda nech sa prehrá znova.
+    if (!calm) {
+      const parts = splash.querySelectorAll('.splash-in > *, .mark i');
+      parts.forEach((el) => { el.style.animation = 'none'; });
+      void splash.offsetWidth;
+      parts.forEach((el) => { el.style.animation = ''; });
+    }
+    splash.classList.remove('out');
+    later(50, () => $('#btn-enter').focus({ preventScroll: true }));
+  }
+
+  function openTop() {
+    const list = $('#top-list');
+    list.replaceChildren();
+    const top = S.stats.top || [];
+    if (!top.length) {
+      const li = document.createElement('li');
+      li.className = 'empty';
+      li.textContent = 'Zatiaľ prázdne. Prvá vyplatená výhra sa sem zapíše.';
+      list.appendChild(li);
+    }
+    top.forEach((e, i) => {
+      const li = document.createElement('li');
+      const rank = document.createElement('span');
+      rank.className = 'rank';
+      rank.textContent = i + 1;
+      const body = document.createElement('div');
+      const amount = document.createElement('b');
+      amount.className = 'amount';
+      amount.textContent = fmt(e.amount);
+      if (e.jackpot) amount.insertAdjacentHTML('beforeend', '<svg><use href="#i-crown"/></svg>');
+      const words = document.createElement('span');
+      words.className = 'words';
+      words.textContent = (e.words || []).join(' · ');
+      body.append(amount, words);
+      const when = document.createElement('small');
+      when.className = 'when';
+      when.append(new Date(e.t).toLocaleDateString('sk-SK'), document.createElement('br'), `vklad ${fmt(e.bet || 0)}`);
+      li.append(rank, body, when);
+      list.appendChild(li);
+    });
+    Sfx.click();
+    $('#dlg-top').showModal();
+  }
+
+  function openAbout() {
+    Sfx.click();
+    const d = $('#dlg-about');
+    d.showModal();
+    d.focus();   // fokus na dialóg, nie na prvý odkaz v texte
   }
 
   // ---- vstupy ------------------------------------------------------------
@@ -566,11 +793,24 @@
   // Úvodná obrazovka. Kliknutie zároveň odomkne zvuk v prehliadači.
   function enter() {
     const splash = $('#splash');
-    if (!splash || splash.classList.contains('out')) return;
+    if (splash.classList.contains('out')) return;
     splash.classList.add('out');
-    Sfx.intro();
-    later(650, () => splash.remove());
+    if (introPlayed) Sfx.click(); else Sfx.intro();
+    introPlayed = true;
+    $('#btn-enter').blur();
     if (S.stats.hands === 0) later(450, () => $('#dlg-help').showModal());
+  }
+
+  // Ktoré hlasy systém ponúka (krupiér: sk/cs, slová: de).
+  function showVoiceStatus() {
+    const el = $('#voice-status');
+    const sk = Voice.voiceName(['sk', 'cs']);
+    const de = Voice.voiceName(['de']);
+    el.replaceChildren(
+      'Hlas krupiéra: ', sk ? sk : 'žiadny slovenský hlas (doinštaluj ho v systéme, napr. Windows → Jazyk → Slovenčina → Reč). ',
+      sk ? ' · ' : '',
+      'Výslovnosť slov: ', de ? de : 'žiadny nemecký hlas.',
+    );
   }
 
   function setTestMode(on) {
@@ -581,6 +821,14 @@
 
   function wire() {
     $('#btn-enter').addEventListener('click', enter);
+    $('#btn-new').addEventListener('click', newGame);
+    $('#btn-top').addEventListener('click', openTop);
+    $('#btn-about').addEventListener('click', openAbout);
+    $('#btn-menu').addEventListener('click', toMenu);
+    $('#splash').addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (b) b.blur();
+    });
     // Ak ťuknutie vymenilo obsah panela, panel chvíľu ignoruje ďalšie ťuknutia,
     // aby dvojité ťuknutie nespustilo tlačidlo, ktoré sa práve objavilo pod prstom.
     $('#dock').addEventListener('click', (e) => {
@@ -624,9 +872,13 @@
     });
     $('#btn-book').addEventListener('click', openBook);
     $('#btn-reset').addEventListener('click', resetAll);
-    $('#btn-help').addEventListener('click', () => $('#dlg-help').showModal());
+    $('#btn-help').addEventListener('click', () => {
+      showVoiceStatus();
+      $('#dlg-help').showModal();
+    });
     $('#btn-sound').addEventListener('click', () => {
       Sfx.toggle();
+      Voice.stop();
       setSoundIcon();
     });
     // Po kliknutí pustiť fokus, aby medzerník nespúšťal naposledy stlačené tlačidlo.
@@ -640,13 +892,16 @@
       const k = e.key;
       dockLockUntil = 0;   // klávesnica je vždy úmyselná
       const splash = $('#splash');
-      if (splash && !splash.classList.contains('out')) {
+      if (!splash.classList.contains('out')) {
+        // Dialóg nad lobby a tlačidlá menu si Enter/medzerník obslúžia samy.
+        if (document.querySelector('dialog[open]') || e.target.closest('.lobby')) return;
         if (k === 'Enter' || k === ' ') {
           e.preventDefault();
           enter();
         }
         return;
       }
+      if (k === 'Escape' && !document.querySelector('dialog[open]')) return toMenu();
       const digit = k.length === 1 && k >= '1' && k <= '4' ? E.ARTICLES[Number(k) - 1] : null;
       if (k === 't' || k === 'T') return setTestMode(!testMode);
       if ($('#dlg-pawn').open) {
@@ -668,6 +923,7 @@
 
   build();
   wire();
+  renderLobby();
   setMsg(E.isBroke(S) ? 'Si na mizine — choď do Pfandhausu.' : 'Vsaď a stlač SPIN.');
   render();
 

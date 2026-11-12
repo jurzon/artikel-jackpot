@@ -161,4 +161,50 @@
     };
   }
   root.Sfx = Sfx;
+
+  // ---- hlas krupiéra a výslovnosť slov (Web Speech API, hlasy systému) ----
+  // Krupiér hovorí po slovensky (náhradne česky), slová číta nemecký hlas.
+  // Bez vhodného hlasu sa daná veta ticho preskočí; hra beží ďalej.
+  const synth = root.speechSynthesis;
+  const voiceCache = {};
+  function voiceFor(langs) {
+    if (!synth) return null;
+    const key = langs.join();
+    if (voiceCache[key] && voiceCache[key].list === synth.getVoices().length) return voiceCache[key].voice;
+    const all = synth.getVoices();
+    let voice = null;
+    for (const lang of langs) {
+      const hits = all.filter((v) => v.lang.toLowerCase().replace('_', '-').startsWith(lang));
+      if (!hits.length) continue;
+      // prednosť: lokálne a „natural/neural“ hlasy pred ostatnými
+      voice = hits.find((v) => /natural|neural/i.test(v.name)) || hits.find((v) => v.localService) || hits[0];
+      break;
+    }
+    voiceCache[key] = { list: all.length, voice };
+    return voice;
+  }
+  function utter(text, langs, rate, pitch) {
+    if (!enabled || !synth || !text) return;
+    const voice = voiceFor(langs);
+    if (!voice) return;
+    const u = new SpeechSynthesisUtterance(text);
+    u.voice = voice;
+    u.lang = voice.lang;
+    u.rate = rate;
+    u.pitch = pitch;
+    u.volume = 0.9;
+    synth.speak(u);
+  }
+  if (synth && typeof synth.getVoices === 'function') synth.getVoices();   // naštartuje načítanie hlasov
+
+  root.Voice = {
+    // nemecké slovo alebo veta, pokojne a zreteľne
+    word: (text) => utter(text, ['de'], 0.9, 1),
+    // krupiérova hláška; preruší, čo práve hovorí
+    croupier: (text) => { if (synth && enabled) synth.cancel(); utter(text, ['sk', 'cs'], 1.05, 0.9); },
+    // krupiérova hláška po slove: nechá slovo dohovoriť
+    after: (text) => utter(text, ['sk', 'cs'], 1.05, 0.9),
+    stop: () => { if (synth) synth.cancel(); },
+    voiceName: (langs) => { const v = voiceFor(langs); return v ? v.name.replace(/Microsoft |Google /, '') : ''; },
+  };
 })(window);

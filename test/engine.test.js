@@ -146,3 +146,54 @@ test('pravidlá sa ukážu len tam, kde platia', () => {
     if (r) assert.ok(r.endsWith(it.a), `${it.id}: ${r}`);
   }
 });
+
+test('Top 10: nový stav má prázdnu tabuľku, stavy ju nezdieľajú', () => {
+  const a = E.newState();
+  const b = E.newState();
+  assert.deepEqual(a.stats.top, []);
+  E.recordTop(a, { amount: 10 });
+  assert.equal(b.stats.top.length, 0);
+});
+
+test('Top 10: radí zostupne, oreže na desať a vracia poradie', () => {
+  const s = E.newState();
+  assert.equal(E.recordTop(s, { amount: 40 }), 1);
+  assert.equal(E.recordTop(s, { amount: 100 }), 1);
+  assert.equal(E.recordTop(s, { amount: 70 }), 2);
+  assert.deepEqual(s.stats.top.map((e) => e.amount), [100, 70, 40]);
+  for (let i = 0; i < 9; i++) E.recordTop(s, { amount: 200 + i });
+  assert.equal(s.stats.top.length, 10);
+  assert.equal(s.stats.top[9].amount, 100);        // 70 a 40 vypadli
+  assert.equal(E.recordTop(s, { amount: 50 }), 0);  // menšia než posledná
+  assert.equal(s.stats.top.length, 10);
+  assert.equal(E.recordTop(s, { amount: 101 }), 10);
+  assert.equal(s.stats.top[9].amount, 101);
+});
+
+test('Top 10: pri rovnakej sume ostáva skoršia výhra vyššie', () => {
+  const s = E.newState();
+  E.recordTop(s, { amount: 50, t: 1 });
+  assert.equal(E.recordTop(s, { amount: 50, t: 2 }), 2);
+  assert.equal(s.stats.top[0].t, 1);
+});
+
+test('Top 10: starý stav bez tabuľky sa doplní', () => {
+  const s = E.newState();
+  delete s.stats.top;
+  assert.equal(E.recordTop(s, { amount: 5 }), 1);
+  assert.equal(s.stats.top.length, 1);
+});
+
+test('ruleMatch ukáže kus slova, ktorý pravidlo označuje', () => {
+  assert.deepEqual(E.ruleMatch(byId('Zeitung')), { text: '-ung → vždy die', part: 'ung', at: 'end' });
+  assert.equal(E.ruleMatch(byId('Gebäude')).part, 'Ge');
+  assert.equal(E.ruleMatch(byId('Gebäude')).at, 'start');
+  assert.equal(E.ruleMatch(byId('Sommer')).part, null);
+  assert.equal(E.ruleMatch(byId('Raum')), null);
+  for (const it of ITEMS) {
+    const m = E.ruleMatch(it);
+    if (!m || !m.part) continue;
+    if (m.at === 'end') assert.ok(it.text.endsWith(m.part), it.id);
+    else assert.ok(it.text.startsWith(m.part), it.id);
+  }
+});
