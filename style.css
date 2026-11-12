@@ -505,7 +505,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .ans.g-die::before { border-radius: 50%; }
 .ans.g-das::before { clip-path: polygon(50% 0, 100% 100%, 0 100%); width: 13px; }
 .ans.g-none::before { display: none; }
-.ans:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 1px 0 rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.45); }
+.ans:active:not(:disabled) { animation: none; transform: translateY(4px); box-shadow: 0 1px 0 rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.45); }
 .ans:disabled { filter: saturate(.45) brightness(.62); }
 .ans.struck { text-decoration: line-through; filter: grayscale(1) brightness(.4); opacity: .7; }
 .ans kbd {
@@ -533,6 +533,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .sq:disabled { opacity: .35; }
 
 .big {
+  position: relative;
   flex: 1;
   min-height: 64px;
   padding: 6px 12px;
@@ -555,6 +556,57 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   box-shadow: 0 6px 0 #000, 0 12px 20px rgba(0,0,0,.4), inset 0 0 0 1.5px var(--brass), inset 0 0 18px rgba(201,163,90,.22);
 }
 .risk:active:not(:disabled) { box-shadow: 0 1px 0 #000, inset 0 0 0 1.5px var(--brass); }
+
+/* ---- výzva na akciu ----------------------------------------------------
+   Čo sa dá práve stlačiť, to dýcha. Stav riadi render() cez disabled,
+   takže pulzuje vždy len skupina pre aktuálnu fázu. */
+
+:root { --beat: 1.8s; }
+
+/* hlavné tlačidlo: mosadz dýcha + sonarový prstenec, ktorý sa rozbieha von */
+.dock .big:not(:disabled) { animation: breathe var(--beat) ease-in-out infinite; }
+@keyframes breathe { 50% { filter: brightness(1.09); } }
+.big::after {
+  content: "";
+  position: absolute; inset: -3px;
+  border-radius: 20px;
+  pointer-events: none;
+  opacity: 0;
+}
+.dock .big:not(:disabled)::after,
+.splash .big::after,
+#pawn-next::after { animation: sonar var(--beat) ease-out infinite; }
+.splash .big::after { animation-delay: 1.9s; }
+@keyframes sonar {
+  0%        { opacity: .9; box-shadow: 0 0 0 0 rgba(241,224,172,.85), 0 0 0 0 rgba(241,224,172,.35); }
+  70%, 100% { opacity: 0;  box-shadow: 0 0 0 10px rgba(241,224,172,0), 0 0 0 18px rgba(241,224,172,0); }
+}
+/* Kassieren a Risiko sa striedajú, aby neblikali v jednom takte */
+#btn-risk:not(:disabled), #btn-risk:not(:disabled)::after { animation-delay: calc(var(--beat) / 2); }
+
+/* vklad: krúžky sa jemne rozsvecujú, mínus a plus v protifáze */
+.sq:not(:disabled) { animation: sq-glow var(--beat) ease-in-out infinite; }
+#bet-plus:not(:disabled) { animation-delay: calc(var(--beat) / 2); }
+@keyframes sq-glow {
+  50% { border-color: var(--brass-hi); box-shadow: 0 0 10px 2px rgba(241,224,172,.45), inset 0 0 6px rgba(241,224,172,.25); }
+}
+
+/* členy: vlna svetla prebehne zľava doprava cez der, die, das, — */
+.ans:not(:disabled) { animation: ans-wave var(--beat) ease-in-out infinite; animation-delay: calc(var(--i, 0) * .16s); }
+.answers .ans:nth-child(2) { --i: 1; }
+.answers .ans:nth-child(3) { --i: 2; }
+.answers .ans:nth-child(4) { --i: 3; }
+@keyframes ans-wave {
+  50% {
+    filter: brightness(1.16);
+    box-shadow: 0 5px 0 rgba(0,0,0,.5), 0 8px 14px rgba(0,0,0,.3), 0 0 18px 3px rgba(255,255,255,.3), inset 0 1px 0 rgba(255,255,255,.6), inset 0 -10px 16px rgba(0,0,0,.18);
+  }
+}
+
+/* Joker: keď sa dá použiť, rám svieti a žetón s počtom tiká */
+.joker:not(:disabled) { border-color: var(--brass-hi); animation: joker-glow var(--beat) ease-in-out infinite; }
+.joker:not(:disabled) span { animation: seal-pulse var(--beat) ease-in-out infinite; }
+@keyframes joker-glow { 50% { box-shadow: 0 0 12px 2px rgba(241,224,172,.5); } }
 
 /* ---- testovací mód ---------------------------------------------------- */
 
